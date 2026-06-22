@@ -14,6 +14,10 @@ pub enum AsterError {
     OrderNotFound,
     /// Referenced order is owned by a different participant.
     ParticipantMismatch,
+    /// A resting order price does not match its price level.
+    PriceLevelMismatch,
+    /// Market orders cannot rest at a price level.
+    MarketOrderCannotRest,
     /// An accepted order or future engine state failed an invariant.
     InvalidOrderState,
 }
@@ -27,6 +31,10 @@ impl fmt::Display for AsterError {
             Self::ParticipantMismatch => {
                 f.write_str("participant does not match the referenced order")
             }
+            Self::PriceLevelMismatch => {
+                f.write_str("resting order price does not match the price level")
+            }
+            Self::MarketOrderCannotRest => f.write_str("market orders cannot rest"),
             Self::InvalidOrderState => f.write_str("invalid order state"),
         }
     }
