@@ -3,7 +3,7 @@
 ## Snapshot
 
 - 2026-06-22 [USER]: Goal is Aster, a Rust central limit order book / exchange matching engine project.
-- 2026-06-22 [USER]: Current task is explicit in-engine append-only event log; file persistence, JSON serialization, serde, command journaling, event-log replay, and benchmarks must not be implemented yet.
+- 2026-06-22 [USER]: Current task is a deterministic `aster-cli` demo for the in-memory matching core; no interactive CLI, persistence, serialization, dashboards, networking, or matching-rule changes.
 - 2026-06-22 [USER]: First credible MVP should prioritize deterministic matching, event logs, replayability, tests, benchmarks, and docs.
 - 2026-06-22 [CODE]: Workspace scaffold contains root Cargo workspace, `aster-core`, `aster-cli`, docs skeletons, README, `.gitignore`, and this ledger.
 - 2026-06-22 [CODE]: `aster-core` includes typed integer primitives, order request/accepted order models, small domain errors, and validation helpers.
@@ -13,6 +13,8 @@
 - 2026-06-22 [CODE]: `aster-core` includes `AsterEngine`, a deterministic command processor that assigns IDs/sequences, matches limit and market orders, emits trades, rests limit remainders, expires market remainders, and cancels resting orders.
 - 2026-06-22 [CODE]: `aster-core` includes in-memory replay from command sequences with deterministic final snapshots.
 - 2026-06-22 [CODE]: `AsterEngine` retains an in-memory append-only event log of emitted `EngineEvent`s.
+- 2026-06-22 [CODE]: `aster-core` has Criterion benchmarks for passive insertion, crossing matching, market sweeps, cancellation, mixed sessions, and replay.
+- 2026-06-22 [CODE]: `aster-cli` runs a deterministic in-memory demo session covering passive liquidity, crossing limit matching, market sweep, successful cancellation, rejected cancellation, final snapshot, and event-log length.
 - 2026-06-22 [ASSUMPTION]: Initial workspace uses Rust 2021 edition and no third-party dependencies.
 
 ## Decisions
@@ -38,6 +40,8 @@
 - 2026-06-22 [CODE]: Implemented cancellation execution for resting orders with participant ownership checks and best-price updates.
 - 2026-06-22 [CODE]: Added in-memory replay scaffolding and `EngineSnapshot` for direct-vs-replay determinism tests; no persistence or serialization.
 - 2026-06-22 [CODE]: Added in-engine append-only event log with read-only access and log clearing; no persistence, serialization, command journaling, or event-log replay.
+- 2026-06-22 [CODE]: Added Criterion benchmark target for in-memory matching and replay workloads; no runtime benchmark dependency.
+- 2026-06-22 [CODE]: Replaced placeholder CLI with deterministic demo output and documented `cargo run -p aster-cli`.
 
 ## Working set
 
@@ -49,6 +53,7 @@
 - 2026-06-22 [CODE]: `crates/aster-core/src/order_book.rs`
 - 2026-06-22 [CODE]: `crates/aster-core/src/price_level.rs`
 - 2026-06-22 [CODE]: `crates/aster-core/src/replay.rs`
+- 2026-06-22 [CODE]: `crates/aster-core/benches/engine_benchmarks.rs`
 - 2026-06-22 [CODE]: `crates/aster-core/src/types.rs`
 - 2026-06-22 [CODE]: `crates/aster-core/src/order.rs`
 - 2026-06-22 [CODE]: `crates/aster-core/src/errors.rs`
@@ -60,7 +65,7 @@
 
 ## Next
 
-- 2026-06-22 [USER]: Next likely milestone is serialization/persistence planning or benchmarks after event-log semantics settle.
+- 2026-06-22 [USER]: Next likely milestone is serialization/persistence planning after CLI demo verification.
 
 ## Open questions
 
@@ -83,3 +88,4 @@
 - 2026-06-22 [TOOL]: After cancellation execution milestone, `cargo fmt`, `cargo clippy --workspace --all-targets -- -D warnings`, and `cargo test --workspace` completed successfully; 76 core tests passed.
 - 2026-06-22 [TOOL]: After in-memory replay milestone, `cargo fmt`, `cargo clippy --workspace --all-targets -- -D warnings`, and `cargo test --workspace` completed successfully; 83 core tests passed.
 - 2026-06-22 [TOOL]: After in-engine event log milestone, `cargo fmt`, `cargo clippy --workspace --all-targets -- -D warnings`, and `cargo test --workspace` completed successfully; 93 core tests passed.
+- 2026-06-22 [TOOL]: After benchmark milestone, `cargo fmt`, `cargo clippy --workspace --all-targets -- -D warnings`, `cargo test --workspace`, and `cargo bench -p aster-core` completed successfully; 93 core tests passed and 7 Criterion workloads executed.

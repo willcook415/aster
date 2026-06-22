@@ -59,8 +59,20 @@ cargo clippy --workspace --all-targets -- -D warnings
 cargo test --workspace
 ```
 
+## Running The Demo
+
+```bash
+cargo run -p aster-cli
+```
+
+This runs a deterministic in-memory demo session that submits passive liquidity, executes crossing and market orders, cancels a resting order, shows a rejected cancellation, and prints the final engine snapshot plus a short event-log summary.
+
+## Running Benchmarks
+
+```bash
+cargo bench -p aster-core
+```
+
 ## Current Status
 
-Aster is at scaffold stage. The Rust workspace, core library crate, CLI crate, continuity ledger, and documentation skeleton exist. The matching engine, order book, event log, replay system, and benchmarks are not implemented yet.
-
-The current CLI only identifies the project and states that the engine core is not implemented.
+Aster has an in-memory matching core with limit orders, market orders, cancellation, an event log, replay scaffolding, tests, focused benchmarks, and a small deterministic CLI demo. Persistence, serialization, interactive CLI workflows, and production-hardening work are not implemented yet.
