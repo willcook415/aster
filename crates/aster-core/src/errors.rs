@@ -18,6 +18,8 @@ pub enum AsterError {
     PriceLevelMismatch,
     /// Market orders cannot rest at a price level.
     MarketOrderCannotRest,
+    /// A resting order ID already exists in book storage.
+    DuplicateOrderId,
     /// An accepted order or future engine state failed an invariant.
     InvalidOrderState,
 }
@@ -35,6 +37,7 @@ impl fmt::Display for AsterError {
                 f.write_str("resting order price does not match the price level")
             }
             Self::MarketOrderCannotRest => f.write_str("market orders cannot rest"),
+            Self::DuplicateOrderId => f.write_str("order ID already exists"),
             Self::InvalidOrderState => f.write_str("invalid order state"),
         }
     }
