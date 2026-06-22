@@ -20,6 +20,12 @@ pub enum AsterError {
     MarketOrderCannotRest,
     /// A resting order ID already exists in book storage.
     DuplicateOrderId,
+    /// Crossing limit orders require matching, which is not implemented yet.
+    CrossingOrderRequiresMatching,
+    /// Market orders require matching, which is not implemented yet.
+    MarketOrderRequiresMatching,
+    /// Cancellation execution is not implemented yet.
+    CancellationNotImplemented,
     /// An accepted order or future engine state failed an invariant.
     InvalidOrderState,
 }
@@ -38,6 +44,15 @@ impl fmt::Display for AsterError {
             }
             Self::MarketOrderCannotRest => f.write_str("market orders cannot rest"),
             Self::DuplicateOrderId => f.write_str("order ID already exists"),
+            Self::CrossingOrderRequiresMatching => {
+                f.write_str("crossing order requires matching, which is not implemented")
+            }
+            Self::MarketOrderRequiresMatching => {
+                f.write_str("market order requires matching, which is not implemented")
+            }
+            Self::CancellationNotImplemented => {
+                f.write_str("cancellation execution is not implemented")
+            }
             Self::InvalidOrderState => f.write_str("invalid order state"),
         }
     }
