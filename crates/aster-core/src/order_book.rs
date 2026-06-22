@@ -9,7 +9,8 @@
 use std::collections::{BTreeMap, HashMap};
 
 use crate::{
-    AcceptedOrder, AsterError, OrderId, OrderType, PriceLevel, PriceTicks, Quantity, Side,
+    AcceptedOrder, AsterError, OrderId, OrderType, ParticipantId, PriceLevel, PriceTicks, Quantity,
+    Side,
 };
 
 /// Single-instrument passive order book storage.
@@ -89,6 +90,35 @@ impl OrderBook {
             .sum()
     }
 
+    /// Cancels a resting order if it exists and belongs to the participant.
+    pub fn cancel_order(
+        &mut self,
+        order_id: OrderId,
+        participant_id: ParticipantId,
+    ) -> Result<AcceptedOrder, AsterError> {
+        let (side, price) = self
+            .order_index
+            .get(&order_id)
+            .copied()
+            .ok_or(AsterError::OrderNotFound)?;
+        let order = self
+            .level(side, price)
+            .and_then(|level| level.get_order(order_id))
+            .copied()
+            .ok_or(AsterError::InvalidOrderState)?;
+
+        if order.participant_id != participant_id {
+            return Err(AsterError::ParticipantMismatch);
+        }
+
+        let removed = self
+            .remove_order_at(side, price, order_id)
+            .ok_or(AsterError::InvalidOrderState)?;
+        self.order_index.remove(&order_id);
+
+        Ok(removed)
+    }
+
     /// Adds an already-accepted passive resting limit order.
     ///
     /// This method stores orders only. It does not check for crossing, execute
@@ -159,6 +189,32 @@ impl OrderBook {
         }
 
         Some(order)
+    }
+
+    fn remove_order_at(
+        &mut self,
+        side: Side,
+        price: PriceTicks,
+        order_id: OrderId,
+    ) -> Option<AcceptedOrder> {
+        let levels = match side {
+            Side::Buy => &mut self.bids,
+            Side::Sell => &mut self.asks,
+        };
+        let level = levels.get_mut(&price)?;
+        let order = level.remove_order(order_id)?;
+        if level.is_empty() {
+            levels.remove(&price);
+        }
+
+        Some(order)
+    }
+
+    fn level(&self, side: Side, price: PriceTicks) -> Option<&PriceLevel> {
+        match side {
+            Side::Buy => self.bids.get(&price),
+            Side::Sell => self.asks.get(&price),
+        }
     }
 
     fn reduce_front_quantity(

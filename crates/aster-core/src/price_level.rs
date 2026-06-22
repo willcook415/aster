@@ -96,4 +96,9 @@ impl PriceLevel {
     pub fn contains_order(&self, order_id: OrderId) -> bool {
         self.orders.iter().any(|order| order.order_id == order_id)
     }
+
+    /// Returns an order by ID without removing it.
+    pub fn get_order(&self, order_id: OrderId) -> Option<&AcceptedOrder> {
+        self.orders.iter().find(|order| order.order_id == order_id)
+    }
 }

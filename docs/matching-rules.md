@@ -2,11 +2,13 @@
 
 ## Scope
 
-Aster currently supports limit-order and market-order matching against resting liquidity. Cancellation execution, replay, persistence, and serialization remain out of scope.
+Aster currently supports limit-order matching, market-order matching, and cancellation of resting orders. Replay, persistence, and serialization remain out of scope.
 
 Non-crossing limit orders rest on the appropriate side of the book. Crossing limit orders are accepted, matched, and any unfilled remainder rests.
 
 Market orders are accepted and match immediately against available opposite-side liquidity. Any unfilled market quantity expires and never rests.
+
+Cancellation applies only to resting orders.
 
 ## Price-Time Priority
 
@@ -36,6 +38,14 @@ Market buys consume asks from lowest price upward. Market sells consume bids fro
 
 Market orders with no available opposite-side liquidity still emit `OrderAccepted`, consume one engine-assigned order ID and sequence number, emit no trades, and do not rest.
 
+## Cancellation
+
+Cancellation by `OrderId` succeeds only when the order is currently resting and the requesting participant owns it.
+
+Missing, already-filled, already-cancelled, and non-resting market order IDs reject with `OrderNotFound`. Wrong-participant cancellation rejects with `ParticipantMismatch` and leaves the order in the book.
+
+Cancellation removes empty price levels and does not consume a new order ID or sequence number.
+
 ## Price and Quantity Representation
 
 Prices use integer ticks via `PriceTicks`. Quantities use integer units via `Quantity`. Floating-point prices and quantities are out of scope.
@@ -44,4 +54,4 @@ Prices use integer ticks via `PriceTicks`. Quantities use integer units via `Qua
 
 Accepted limit and market orders emit `OrderAccepted` first, followed by one `TradeExecuted` event per fill.
 
-Cancellation commands still emit `CancelRejected` with `CancellationNotImplemented`.
+Successful cancellation emits `OrderCancelled`. Failed cancellation emits `CancelRejected`.

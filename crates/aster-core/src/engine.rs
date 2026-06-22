@@ -7,7 +7,7 @@
 
 use crate::{
     AcceptedOrder, AsterError, EngineCommand, EngineEvent, OrderBook, OrderId, OrderRequest,
-    OrderType, PriceTicks, Quantity, SequenceNumber, Side,
+    OrderType, ParticipantId, PriceTicks, Quantity, SequenceNumber, Side,
 };
 
 const FIRST_ORDER_ID: u64 = 1;
@@ -38,11 +38,7 @@ impl AsterEngine {
             EngineCommand::CancelOrder {
                 order_id,
                 participant_id,
-            } => vec![EngineEvent::CancelRejected {
-                order_id,
-                participant_id,
-                reason: AsterError::CancellationNotImplemented,
-            }],
+            } => self.process_cancel_order(order_id, participant_id),
         }
     }
 
@@ -66,6 +62,24 @@ impl AsterEngine {
                 events
             }
             Err(reason) => vec![EngineEvent::OrderRejected { reason }],
+        }
+    }
+
+    fn process_cancel_order(
+        &mut self,
+        order_id: OrderId,
+        participant_id: ParticipantId,
+    ) -> Vec<EngineEvent> {
+        match self.order_book.cancel_order(order_id, participant_id) {
+            Ok(_) => vec![EngineEvent::OrderCancelled {
+                order_id,
+                participant_id,
+            }],
+            Err(reason) => vec![EngineEvent::CancelRejected {
+                order_id,
+                participant_id,
+                reason,
+            }],
         }
     }
 

@@ -12,8 +12,17 @@ fn quantity(value: u64) -> Quantity {
 }
 
 fn limit_request(side: Side, price: PriceTicks, quantity_value: u64) -> OrderRequest {
+    limit_request_for(1, side, price, quantity_value)
+}
+
+fn limit_request_for(
+    participant_id: u64,
+    side: Side,
+    price: PriceTicks,
+    quantity_value: u64,
+) -> OrderRequest {
     OrderRequest::new(
-        ParticipantId::new(1),
+        ParticipantId::new(participant_id),
         side,
         OrderType::Limit { price },
         quantity(quantity_value),
@@ -27,6 +36,10 @@ fn market_request(side: Side, quantity_value: u64) -> OrderRequest {
         OrderType::Market,
         quantity(quantity_value),
     )
+}
+
+fn cancel(order_id: OrderId, participant_id: u64) -> EngineCommand {
+    EngineCommand::cancel_order(order_id, ParticipantId::new(participant_id))
 }
 
 fn accepted_order_from(events: &[EngineEvent]) -> aster_core::AcceptedOrder {
@@ -559,12 +572,8 @@ fn accepted_market_orders_consume_deterministic_ids_and_sequences() {
 }
 
 #[test]
-fn cancellation_remains_rejected_and_does_not_consume_ids_or_sequences() {
+fn cancelling_existing_resting_buy_order_emits_order_cancelled() {
     let mut engine = AsterEngine::new();
-    let cancel = engine.process_command(EngineCommand::cancel_order(
-        OrderId::new(999),
-        ParticipantId::new(1),
-    ));
     let accepted = engine.process_command(EngineCommand::submit_order(limit_request(
         Side::Buy,
         price(100),
@@ -572,15 +581,217 @@ fn cancellation_remains_rejected_and_does_not_consume_ids_or_sequences() {
     )));
     let order = accepted_order_from(&accepted);
 
+    let cancel = engine.process_command(cancel(order.order_id, 1));
+
     assert_eq!(
         cancel,
-        vec![EngineEvent::CancelRejected {
-            order_id: OrderId::new(999),
+        vec![EngineEvent::OrderCancelled {
+            order_id: order.order_id,
             participant_id: ParticipantId::new(1),
-            reason: AsterError::CancellationNotImplemented,
         }]
     );
+}
+
+#[test]
+fn cancelling_existing_resting_sell_order_emits_order_cancelled() {
+    let mut engine = AsterEngine::new();
+    let accepted = engine.process_command(EngineCommand::submit_order(limit_request(
+        Side::Sell,
+        price(101),
+        10,
+    )));
+    let order = accepted_order_from(&accepted);
+
+    let cancel = engine.process_command(cancel(order.order_id, 1));
+
+    assert_eq!(
+        cancel,
+        vec![EngineEvent::OrderCancelled {
+            order_id: order.order_id,
+            participant_id: ParticipantId::new(1),
+        }]
+    );
+}
+
+#[test]
+fn successful_cancellation_removes_order_from_book() {
+    let mut engine = AsterEngine::new();
+    let order = accepted_order_from(&engine.process_command(EngineCommand::submit_order(
+        limit_request(Side::Buy, price(100), 10),
+    )));
+
+    engine.process_command(cancel(order.order_id, 1));
+
+    assert!(!engine.order_book().contains_order(order.order_id));
+    assert!(engine.order_book().is_empty());
+}
+
+#[test]
+fn cancelled_order_cannot_be_matched_later() {
+    let mut engine = AsterEngine::new();
+    let order = accepted_order_from(&engine.process_command(EngineCommand::submit_order(
+        limit_request(Side::Sell, price(100), 10),
+    )));
+    engine.process_command(cancel(order.order_id, 1));
+
+    let events = engine.process_command(EngineCommand::submit_order(limit_request(
+        Side::Buy,
+        price(100),
+        10,
+    )));
+
+    assert_eq!(events.len(), 1);
+    assert!(matches!(events[0], EngineEvent::OrderAccepted { .. }));
+    assert_eq!(engine.order_book().best_bid_price(), Some(price(100)));
+}
+
+#[test]
+fn cancelling_missing_order_emits_order_not_found() {
+    let mut engine = AsterEngine::new();
+
+    let events = engine.process_command(cancel(OrderId::new(404), 1));
+
+    assert_eq!(
+        events,
+        vec![EngineEvent::CancelRejected {
+            order_id: OrderId::new(404),
+            participant_id: ParticipantId::new(1),
+            reason: AsterError::OrderNotFound,
+        }]
+    );
+}
+
+#[test]
+fn cancelling_already_cancelled_order_emits_order_not_found() {
+    let mut engine = AsterEngine::new();
+    let order = accepted_order_from(&engine.process_command(EngineCommand::submit_order(
+        limit_request(Side::Buy, price(100), 10),
+    )));
+    engine.process_command(cancel(order.order_id, 1));
+
+    let events = engine.process_command(cancel(order.order_id, 1));
+
+    assert_eq!(
+        events,
+        vec![EngineEvent::CancelRejected {
+            order_id: order.order_id,
+            participant_id: ParticipantId::new(1),
+            reason: AsterError::OrderNotFound,
+        }]
+    );
+}
+
+#[test]
+fn cancelling_fully_filled_order_emits_order_not_found() {
+    let mut engine = AsterEngine::new();
+    let resting = accepted_order_from(&engine.process_command(EngineCommand::submit_order(
+        limit_request(Side::Sell, price(100), 10),
+    )));
+    engine.process_command(EngineCommand::submit_order(limit_request(
+        Side::Buy,
+        price(100),
+        10,
+    )));
+
+    let events = engine.process_command(cancel(resting.order_id, 1));
+
+    assert_eq!(
+        events,
+        vec![EngineEvent::CancelRejected {
+            order_id: resting.order_id,
+            participant_id: ParticipantId::new(1),
+            reason: AsterError::OrderNotFound,
+        }]
+    );
+}
+
+#[test]
+fn cancelling_with_wrong_participant_rejects_and_leaves_order_in_book() {
+    let mut engine = AsterEngine::new();
+    let order = accepted_order_from(&engine.process_command(EngineCommand::submit_order(
+        limit_request_for(7, Side::Buy, price(100), 10),
+    )));
+
+    let events = engine.process_command(cancel(order.order_id, 8));
+
+    assert_eq!(
+        events,
+        vec![EngineEvent::CancelRejected {
+            order_id: order.order_id,
+            participant_id: ParticipantId::new(8),
+            reason: AsterError::ParticipantMismatch,
+        }]
+    );
+    assert!(engine.order_book().contains_order(order.order_id));
+}
+
+#[test]
+fn cancelling_only_order_at_price_removes_empty_price_level() {
+    let mut engine = AsterEngine::new();
+    let order = accepted_order_from(&engine.process_command(EngineCommand::submit_order(
+        limit_request(Side::Buy, price(100), 10),
+    )));
+
+    engine.process_command(cancel(order.order_id, 1));
+
+    assert_eq!(engine.order_book().bid_level_count(), 0);
+    assert_eq!(engine.order_book().best_bid_price(), None);
+}
+
+#[test]
+fn best_bid_and_best_ask_update_after_cancelling_best_orders() {
+    let mut engine = AsterEngine::new();
+    let lower_bid = accepted_order_from(&engine.process_command(EngineCommand::submit_order(
+        limit_request(Side::Buy, price(99), 10),
+    )));
+    let best_bid = accepted_order_from(&engine.process_command(EngineCommand::submit_order(
+        limit_request(Side::Buy, price(100), 10),
+    )));
+    let higher_ask = accepted_order_from(&engine.process_command(EngineCommand::submit_order(
+        limit_request(Side::Sell, price(103), 10),
+    )));
+    let best_ask = accepted_order_from(&engine.process_command(EngineCommand::submit_order(
+        limit_request(Side::Sell, price(102), 10),
+    )));
+
+    engine.process_command(cancel(best_bid.order_id, 1));
+    engine.process_command(cancel(best_ask.order_id, 1));
+
+    assert_eq!(engine.order_book().best_bid_price(), Some(price(99)));
+    assert_eq!(engine.order_book().best_ask_price(), Some(price(103)));
+    assert!(engine.order_book().contains_order(lower_bid.order_id));
+    assert!(engine.order_book().contains_order(higher_ask.order_id));
+}
+
+#[test]
+fn cancellation_does_not_consume_order_ids_or_sequences() {
+    let mut engine = AsterEngine::new();
+    engine.process_command(cancel(OrderId::new(999), 1));
+    let accepted = engine.process_command(EngineCommand::submit_order(limit_request(
+        Side::Buy,
+        price(100),
+        10,
+    )));
+    let order = accepted_order_from(&accepted);
+
     assert_eq!(order.order_id.as_u64(), 1);
     assert_eq!(order.sequence_number.as_u64(), 1);
-    assert!(engine.order_book().contains_order(order.order_id));
+}
+
+#[test]
+fn market_orders_with_no_resting_remainder_cannot_be_cancelled() {
+    let mut engine = AsterEngine::new();
+    let events = engine.process_command(EngineCommand::submit_order(market_request(Side::Buy, 10)));
+    let market = accepted_order_from(&events);
+
+    let cancel_events = engine.process_command(cancel(market.order_id, 1));
+
+    assert_eq!(
+        cancel_events,
+        vec![EngineEvent::CancelRejected {
+            order_id: market.order_id,
+            participant_id: ParticipantId::new(1),
+            reason: AsterError::OrderNotFound,
+        }]
+    );
 }
