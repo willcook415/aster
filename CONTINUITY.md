@@ -3,7 +3,7 @@
 ## Snapshot
 
 - 2026-06-22 [USER]: Goal is Aster, a Rust central limit order book / exchange matching engine project.
-- 2026-06-22 [USER]: Current task is in-memory deterministic replay scaffolding; file persistence, JSON serialization, serde, and benchmarks must not be implemented yet.
+- 2026-06-22 [USER]: Current task is explicit in-engine append-only event log; file persistence, JSON serialization, serde, command journaling, event-log replay, and benchmarks must not be implemented yet.
 - 2026-06-22 [USER]: First credible MVP should prioritize deterministic matching, event logs, replayability, tests, benchmarks, and docs.
 - 2026-06-22 [CODE]: Workspace scaffold contains root Cargo workspace, `aster-core`, `aster-cli`, docs skeletons, README, `.gitignore`, and this ledger.
 - 2026-06-22 [CODE]: `aster-core` includes typed integer primitives, order request/accepted order models, small domain errors, and validation helpers.
@@ -12,6 +12,7 @@
 - 2026-06-22 [CODE]: `aster-core` includes `OrderBook`, a passive single-instrument bid/ask storage shell using deterministic price levels.
 - 2026-06-22 [CODE]: `aster-core` includes `AsterEngine`, a deterministic command processor that assigns IDs/sequences, matches limit and market orders, emits trades, rests limit remainders, expires market remainders, and cancels resting orders.
 - 2026-06-22 [CODE]: `aster-core` includes in-memory replay from command sequences with deterministic final snapshots.
+- 2026-06-22 [CODE]: `AsterEngine` retains an in-memory append-only event log of emitted `EngineEvent`s.
 - 2026-06-22 [ASSUMPTION]: Initial workspace uses Rust 2021 edition and no third-party dependencies.
 
 ## Decisions
@@ -36,6 +37,7 @@
 - 2026-06-22 [CODE]: Implemented market order execution using existing matching flow; unfilled market quantity expires and never rests.
 - 2026-06-22 [CODE]: Implemented cancellation execution for resting orders with participant ownership checks and best-price updates.
 - 2026-06-22 [CODE]: Added in-memory replay scaffolding and `EngineSnapshot` for direct-vs-replay determinism tests; no persistence or serialization.
+- 2026-06-22 [CODE]: Added in-engine append-only event log with read-only access and log clearing; no persistence, serialization, command journaling, or event-log replay.
 
 ## Working set
 
@@ -58,7 +60,7 @@
 
 ## Next
 
-- 2026-06-22 [USER]: Next likely milestone is an explicit in-engine event log or serialization/persistence planning after replay semantics settle.
+- 2026-06-22 [USER]: Next likely milestone is serialization/persistence planning or benchmarks after event-log semantics settle.
 
 ## Open questions
 
@@ -80,3 +82,4 @@
 - 2026-06-22 [TOOL]: After market order execution milestone, `cargo fmt`, `cargo clippy --workspace --all-targets -- -D warnings`, and `cargo test --workspace` completed successfully; 65 core tests passed.
 - 2026-06-22 [TOOL]: After cancellation execution milestone, `cargo fmt`, `cargo clippy --workspace --all-targets -- -D warnings`, and `cargo test --workspace` completed successfully; 76 core tests passed.
 - 2026-06-22 [TOOL]: After in-memory replay milestone, `cargo fmt`, `cargo clippy --workspace --all-targets -- -D warnings`, and `cargo test --workspace` completed successfully; 83 core tests passed.
+- 2026-06-22 [TOOL]: After in-engine event log milestone, `cargo fmt`, `cargo clippy --workspace --all-targets -- -D warnings`, and `cargo test --workspace` completed successfully; 93 core tests passed.

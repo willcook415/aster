@@ -17,6 +17,7 @@ const FIRST_SEQUENCE_NUMBER: u64 = 1;
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AsterEngine {
     order_book: OrderBook,
+    event_log: Vec<EngineEvent>,
     next_order_id: u64,
     next_sequence_number: u64,
 }
@@ -36,6 +37,7 @@ impl AsterEngine {
     pub fn new() -> Self {
         Self {
             order_book: OrderBook::new(),
+            event_log: Vec::new(),
             next_order_id: FIRST_ORDER_ID,
             next_sequence_number: FIRST_SEQUENCE_NUMBER,
         }
@@ -43,13 +45,17 @@ impl AsterEngine {
 
     /// Processes one inbound command and returns emitted facts.
     pub fn process_command(&mut self, command: EngineCommand) -> Vec<EngineEvent> {
-        match command {
+        let events = match command {
             EngineCommand::SubmitOrder(request) => self.process_submit_order(request),
             EngineCommand::CancelOrder {
                 order_id,
                 participant_id,
             } => self.process_cancel_order(order_id, participant_id),
-        }
+        };
+
+        self.event_log.extend(events.iter().copied());
+
+        events
     }
 
     /// Processes commands in order and concatenates emitted events.
@@ -66,6 +72,16 @@ impl AsterEngine {
     /// Returns the engine's internal passive order book.
     pub const fn order_book(&self) -> &OrderBook {
         &self.order_book
+    }
+
+    /// Returns the in-memory append-only event history.
+    pub fn event_log(&self) -> &[EngineEvent] {
+        &self.event_log
+    }
+
+    /// Clears only the retained event history.
+    pub fn clear_event_log(&mut self) {
+        self.event_log.clear();
     }
 
     /// Returns a deterministic state snapshot for replay comparisons.
