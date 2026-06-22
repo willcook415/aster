@@ -3,14 +3,14 @@
 ## Snapshot
 
 - 2026-06-22 [USER]: Goal is Aster, a Rust central limit order book / exchange matching engine project.
-- 2026-06-22 [USER]: Current task is limit-order matching only; market execution, cancellation execution, replay, persistence, and serialization must not be implemented yet.
+- 2026-06-22 [USER]: Current task is market order execution only; cancellation execution, replay, persistence, and serialization must not be implemented yet.
 - 2026-06-22 [USER]: First credible MVP should prioritize deterministic matching, event logs, replayability, tests, benchmarks, and docs.
 - 2026-06-22 [CODE]: Workspace scaffold contains root Cargo workspace, `aster-core`, `aster-cli`, docs skeletons, README, `.gitignore`, and this ledger.
 - 2026-06-22 [CODE]: `aster-core` includes typed integer primitives, order request/accepted order models, small domain errors, and validation helpers.
 - 2026-06-22 [CODE]: `aster-core` includes `EngineCommand` and `EngineEvent` skeletons separating input intentions from emitted facts.
 - 2026-06-22 [CODE]: `aster-core` includes `PriceLevel`, a FIFO queue for valid resting limit orders at one price.
 - 2026-06-22 [CODE]: `aster-core` includes `OrderBook`, a passive single-instrument bid/ask storage shell using deterministic price levels.
-- 2026-06-22 [CODE]: `aster-core` includes `AsterEngine`, a deterministic command processor that assigns IDs/sequences, matches crossing limit orders, emits trades, and rests remainders.
+- 2026-06-22 [CODE]: `aster-core` includes `AsterEngine`, a deterministic command processor that assigns IDs/sequences, matches limit and market orders, emits trades, rests limit remainders, and expires market remainders.
 - 2026-06-22 [ASSUMPTION]: Initial workspace uses Rust 2021 edition and no third-party dependencies.
 
 ## Decisions
@@ -32,6 +32,7 @@
 - 2026-06-22 [CODE]: Added passive bid/ask `OrderBook` storage with best bid/ask queries and duplicate order ID rejection; no crossing or matching.
 - 2026-06-22 [CODE]: Added minimal `AsterEngine` acceptance shell; crossing limits, markets, and cancels emit explicit rejection events.
 - 2026-06-22 [CODE]: Implemented focused limit-order matching against resting liquidity with price-time priority, partial fills, full fills, and remainder resting.
+- 2026-06-22 [CODE]: Implemented market order execution using existing matching flow; unfilled market quantity expires and never rests.
 
 ## Working set
 
@@ -53,7 +54,7 @@
 
 ## Next
 
-- 2026-06-22 [USER]: Next likely milestone is market order execution or cancellation execution, after reviewing limit matching semantics.
+- 2026-06-22 [USER]: Next likely milestone is cancellation execution by order ID with participant ownership checks.
 
 ## Open questions
 
@@ -72,3 +73,4 @@
 - 2026-06-22 [TOOL]: After `OrderBook` storage milestone, `cargo fmt`, `cargo clippy --workspace --all-targets -- -D warnings`, and `cargo test --workspace` completed successfully; 40 core tests passed.
 - 2026-06-22 [TOOL]: After `AsterEngine` acceptance milestone, `cargo fmt`, `cargo clippy --workspace --all-targets -- -D warnings`, and `cargo test --workspace` completed successfully; 52 core tests passed.
 - 2026-06-22 [TOOL]: After limit-order matching milestone, `cargo fmt`, `cargo clippy --workspace --all-targets -- -D warnings`, and `cargo test --workspace` completed successfully; 59 core tests passed.
+- 2026-06-22 [TOOL]: After market order execution milestone, `cargo fmt`, `cargo clippy --workspace --all-targets -- -D warnings`, and `cargo test --workspace` completed successfully; 65 core tests passed.

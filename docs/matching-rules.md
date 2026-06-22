@@ -2,9 +2,11 @@
 
 ## Scope
 
-Aster currently supports limit-order matching against resting liquidity. Market order execution, cancellation execution, replay, persistence, and serialization remain out of scope.
+Aster currently supports limit-order and market-order matching against resting liquidity. Cancellation execution, replay, persistence, and serialization remain out of scope.
 
 Non-crossing limit orders rest on the appropriate side of the book. Crossing limit orders are accepted, matched, and any unfilled remainder rests.
+
+Market orders are accepted and match immediately against available opposite-side liquidity. Any unfilled market quantity expires and never rests.
 
 ## Price-Time Priority
 
@@ -28,12 +30,18 @@ A sell limit crosses while the best bid exists and the sell price is less than o
 
 The trade price is always the resting order's limit price.
 
+## Market Orders
+
+Market buys consume asks from lowest price upward. Market sells consume bids from highest price downward.
+
+Market orders with no available opposite-side liquidity still emit `OrderAccepted`, consume one engine-assigned order ID and sequence number, emit no trades, and do not rest.
+
 ## Price and Quantity Representation
 
 Prices use integer ticks via `PriceTicks`. Quantities use integer units via `Quantity`. Floating-point prices and quantities are out of scope.
 
 ## Event Semantics
 
-Accepted limit orders emit `OrderAccepted` first, followed by one `TradeExecuted` event per fill.
+Accepted limit and market orders emit `OrderAccepted` first, followed by one `TradeExecuted` event per fill.
 
-Market orders still emit `OrderRejected` with `MarketOrderRequiresMatching`. Cancellation commands still emit `CancelRejected` with `CancellationNotImplemented`.
+Cancellation commands still emit `CancelRejected` with `CancellationNotImplemented`.
