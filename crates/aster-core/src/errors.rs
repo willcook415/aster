@@ -10,6 +10,10 @@ pub enum AsterError {
     ZeroQuantity,
     /// Limit prices must be positive integer ticks.
     ZeroPrice,
+    /// Referenced order does not exist in the future engine state.
+    OrderNotFound,
+    /// Referenced order is owned by a different participant.
+    ParticipantMismatch,
     /// An accepted order or future engine state failed an invariant.
     InvalidOrderState,
 }
@@ -19,6 +23,10 @@ impl fmt::Display for AsterError {
         match self {
             Self::ZeroQuantity => f.write_str("quantity must be greater than zero"),
             Self::ZeroPrice => f.write_str("price ticks must be greater than zero"),
+            Self::OrderNotFound => f.write_str("order was not found"),
+            Self::ParticipantMismatch => {
+                f.write_str("participant does not match the referenced order")
+            }
             Self::InvalidOrderState => f.write_str("invalid order state"),
         }
     }

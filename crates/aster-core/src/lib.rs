@@ -2,15 +2,20 @@
 //!
 //! This crate will contain the central limit order book domain model,
 //! validation, matching, event log, and replay logic. It is intentionally
-//! limited to finance-safe domain primitives at this stage and does not yet
-//! implement order book storage, matching rules, event logs, or replay.
+//! limited to finance-safe domain primitives and command/event skeletons at
+//! this stage. It does not yet implement order book storage, matching rules,
+//! event persistence, or replay.
 
+pub mod command;
 pub mod errors;
+pub mod event;
 pub mod order;
 pub mod types;
 pub mod validation;
 
+pub use command::EngineCommand;
 pub use errors::AsterError;
+pub use event::EngineEvent;
 pub use order::{AcceptedOrder, OrderRequest, OrderType, Side};
 pub use types::{OrderId, ParticipantId, PriceTicks, Quantity, SequenceNumber};
 
