@@ -8,7 +8,9 @@
 
 use std::collections::{BTreeMap, HashMap};
 
-use crate::{AcceptedOrder, AsterError, OrderId, OrderType, PriceLevel, PriceTicks, Side};
+use crate::{
+    AcceptedOrder, AsterError, OrderId, OrderType, PriceLevel, PriceTicks, Quantity, Side,
+};
 
 /// Single-instrument passive order book storage.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -63,6 +65,16 @@ impl OrderBook {
         self.asks.values().next()
     }
 
+    /// Returns the oldest order at the highest bid price.
+    pub fn best_bid_front_order(&self) -> Option<&AcceptedOrder> {
+        self.best_bid_level()?.front()
+    }
+
+    /// Returns the oldest order at the lowest ask price.
+    pub fn best_ask_front_order(&self) -> Option<&AcceptedOrder> {
+        self.best_ask_level()?.front()
+    }
+
     /// Returns whether the book contains an order ID on either side.
     pub fn contains_order(&self, order_id: OrderId) -> bool {
         self.order_index.contains_key(&order_id)
@@ -102,6 +114,68 @@ impl OrderBook {
         self.order_index.insert(order.order_id, (order.side, price));
 
         Ok(())
+    }
+
+    /// Removes and returns the oldest order at the highest bid price.
+    pub fn pop_best_bid_front_order(&mut self) -> Option<AcceptedOrder> {
+        let price = self.best_bid_price()?;
+        self.pop_front_order(Side::Buy, price)
+    }
+
+    /// Removes and returns the oldest order at the lowest ask price.
+    pub fn pop_best_ask_front_order(&mut self) -> Option<AcceptedOrder> {
+        let price = self.best_ask_price()?;
+        self.pop_front_order(Side::Sell, price)
+    }
+
+    /// Reduces the oldest order at the highest bid price.
+    pub fn reduce_best_bid_front_quantity(
+        &mut self,
+        new_quantity: Quantity,
+    ) -> Result<(), AsterError> {
+        let price = self.best_bid_price().ok_or(AsterError::InvalidOrderState)?;
+        self.reduce_front_quantity(Side::Buy, price, new_quantity)
+    }
+
+    /// Reduces the oldest order at the lowest ask price.
+    pub fn reduce_best_ask_front_quantity(
+        &mut self,
+        new_quantity: Quantity,
+    ) -> Result<(), AsterError> {
+        let price = self.best_ask_price().ok_or(AsterError::InvalidOrderState)?;
+        self.reduce_front_quantity(Side::Sell, price, new_quantity)
+    }
+
+    fn pop_front_order(&mut self, side: Side, price: PriceTicks) -> Option<AcceptedOrder> {
+        let levels = match side {
+            Side::Buy => &mut self.bids,
+            Side::Sell => &mut self.asks,
+        };
+        let level = levels.get_mut(&price)?;
+        let order = level.pop_front()?;
+        self.order_index.remove(&order.order_id);
+        if level.is_empty() {
+            levels.remove(&price);
+        }
+
+        Some(order)
+    }
+
+    fn reduce_front_quantity(
+        &mut self,
+        side: Side,
+        price: PriceTicks,
+        new_quantity: Quantity,
+    ) -> Result<(), AsterError> {
+        let levels = match side {
+            Side::Buy => &mut self.bids,
+            Side::Sell => &mut self.asks,
+        };
+        let level = levels
+            .get_mut(&price)
+            .ok_or(AsterError::InvalidOrderState)?;
+
+        level.reduce_front_quantity(new_quantity)
     }
 }
 

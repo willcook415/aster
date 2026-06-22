@@ -1,13 +1,14 @@
 //! High-level deterministic command processor.
 //!
 //! `AsterEngine` owns order ID and sequence number allocation. At this stage it
-//! accepts and rests only non-crossing limit orders. Crossing limit orders and
-//! market orders are rejected until matching is implemented, and cancellation
-//! commands are rejected until cancellation execution exists.
+//! accepts limit orders, matches them against resting liquidity, and rests any
+//! remaining limit quantity. Market orders are rejected until market execution
+//! is implemented, and cancellation commands are rejected until cancellation
+//! execution exists.
 
 use crate::{
     AcceptedOrder, AsterError, EngineCommand, EngineEvent, OrderBook, OrderId, OrderRequest,
-    OrderType, PriceTicks, SequenceNumber, Side,
+    OrderType, PriceTicks, Quantity, SequenceNumber, Side,
 };
 
 const FIRST_ORDER_ID: u64 = 1;
@@ -58,25 +59,93 @@ impl AsterEngine {
             }];
         };
 
-        if self.crosses_book(request.side, price) {
-            return vec![EngineEvent::OrderRejected {
-                reason: AsterError::CrossingOrderRequiresMatching,
-            }];
-        }
-
         let order = AcceptedOrder::new(
             OrderId::new(self.next_order_id),
             SequenceNumber::new(self.next_sequence_number),
             request,
         );
+        let mut events = vec![EngineEvent::OrderAccepted { order }];
 
-        match self.order_book.add_resting_order(order) {
+        match self.match_and_maybe_rest(order, price, &mut events) {
             Ok(()) => {
                 self.next_order_id += 1;
                 self.next_sequence_number += 1;
-                vec![EngineEvent::OrderAccepted { order }]
+                events
             }
             Err(reason) => vec![EngineEvent::OrderRejected { reason }],
+        }
+    }
+
+    fn match_and_maybe_rest(
+        &mut self,
+        order: AcceptedOrder,
+        limit_price: PriceTicks,
+        events: &mut Vec<EngineEvent>,
+    ) -> Result<(), AsterError> {
+        let mut remaining_quantity = order.quantity.as_u64();
+
+        while remaining_quantity > 0 && self.crosses_book(order.side, limit_price) {
+            let resting_order = self
+                .best_opposing_front_order(order.side)
+                .ok_or(AsterError::InvalidOrderState)?;
+            let resting_quantity = resting_order.quantity.as_u64();
+            let fill_quantity = remaining_quantity.min(resting_quantity);
+            let trade_quantity = Quantity::new(fill_quantity)?;
+            let OrderType::Limit { price } = resting_order.order_type else {
+                return Err(AsterError::InvalidOrderState);
+            };
+
+            events.push(EngineEvent::TradeExecuted {
+                resting_order_id: resting_order.order_id,
+                incoming_order_id: order.order_id,
+                price,
+                quantity: trade_quantity,
+            });
+
+            if fill_quantity == resting_quantity {
+                self.pop_best_opposing_front_order(order.side)
+                    .ok_or(AsterError::InvalidOrderState)?;
+            } else {
+                self.reduce_best_opposing_front_quantity(
+                    order.side,
+                    Quantity::new(resting_quantity - fill_quantity)?,
+                )?;
+            }
+
+            remaining_quantity -= fill_quantity;
+        }
+
+        if remaining_quantity > 0 {
+            let mut resting_remainder = order;
+            resting_remainder.quantity = Quantity::new(remaining_quantity)?;
+            self.order_book.add_resting_order(resting_remainder)?;
+        }
+
+        Ok(())
+    }
+
+    fn best_opposing_front_order(&self, incoming_side: Side) -> Option<AcceptedOrder> {
+        match incoming_side {
+            Side::Buy => self.order_book.best_ask_front_order().copied(),
+            Side::Sell => self.order_book.best_bid_front_order().copied(),
+        }
+    }
+
+    fn pop_best_opposing_front_order(&mut self, incoming_side: Side) -> Option<AcceptedOrder> {
+        match incoming_side {
+            Side::Buy => self.order_book.pop_best_ask_front_order(),
+            Side::Sell => self.order_book.pop_best_bid_front_order(),
+        }
+    }
+
+    fn reduce_best_opposing_front_quantity(
+        &mut self,
+        incoming_side: Side,
+        new_quantity: Quantity,
+    ) -> Result<(), AsterError> {
+        match incoming_side {
+            Side::Buy => self.order_book.reduce_best_ask_front_quantity(new_quantity),
+            Side::Sell => self.order_book.reduce_best_bid_front_quantity(new_quantity),
         }
     }
 
