@@ -6,13 +6,14 @@ Aster will be a deterministic central limit order book and matching engine.
 
 ## Intended Components
 
-TODO: Define module boundaries for order modelling, price levels, order book state, matching, validation, events, replay, errors, tests, and benchmarks.
+Aster is organized around explicit domain modules for order modelling, price levels, order book state, command processing, events, replay, validation, errors, tests, and future benchmarks.
 
 ## Determinism
 
-TODO: Document how engine-controlled sequence numbers will drive priority and replay. Matching must not depend on wall-clock timestamps, randomness, or unordered iteration.
+Engine-controlled order IDs and sequence numbers drive deterministic state transitions. Matching must not depend on wall-clock timestamps, randomness, or unordered iteration.
+
+In-memory replay currently runs a command sequence through a fresh `AsterEngine`, collects emitted events, and compares a deterministic final `EngineSnapshot`. There is no file persistence or serialization yet.
 
 ## Data Model Direction
 
-TODO: Introduce finance-safe primitive types such as `OrderId`, `ParticipantId`, `SequenceNumber`, `PriceTicks`, `Quantity`, `Side`, and `OrderType`.
-
+Aster uses finance-safe primitive types such as `OrderId`, `ParticipantId`, `SequenceNumber`, `PriceTicks`, `Quantity`, `Side`, and `OrderType`.

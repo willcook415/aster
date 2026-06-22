@@ -21,6 +21,16 @@ pub struct AsterEngine {
     next_sequence_number: u64,
 }
 
+/// Deterministic summary of externally relevant engine state.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct EngineSnapshot {
+    pub best_bid: Option<PriceTicks>,
+    pub best_ask: Option<PriceTicks>,
+    pub bid_level_count: usize,
+    pub ask_level_count: usize,
+    pub total_resting_quantity: u64,
+}
+
 impl AsterEngine {
     /// Creates an empty engine with deterministic counters starting at 1.
     pub fn new() -> Self {
@@ -42,9 +52,31 @@ impl AsterEngine {
         }
     }
 
+    /// Processes commands in order and concatenates emitted events.
+    pub fn process_commands<I>(&mut self, commands: I) -> Vec<EngineEvent>
+    where
+        I: IntoIterator<Item = EngineCommand>,
+    {
+        commands
+            .into_iter()
+            .flat_map(|command| self.process_command(command))
+            .collect()
+    }
+
     /// Returns the engine's internal passive order book.
     pub const fn order_book(&self) -> &OrderBook {
         &self.order_book
+    }
+
+    /// Returns a deterministic state snapshot for replay comparisons.
+    pub fn snapshot(&self) -> EngineSnapshot {
+        EngineSnapshot {
+            best_bid: self.order_book.best_bid_price(),
+            best_ask: self.order_book.best_ask_price(),
+            bid_level_count: self.order_book.bid_level_count(),
+            ask_level_count: self.order_book.ask_level_count(),
+            total_resting_quantity: self.order_book.total_resting_quantity(),
+        }
     }
 
     fn process_submit_order(&mut self, request: OrderRequest) -> Vec<EngineEvent> {
