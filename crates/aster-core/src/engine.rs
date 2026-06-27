@@ -118,6 +118,16 @@ impl AsterEngine {
     }
 
     fn process_submit_order(&mut self, request: OrderRequest) -> Vec<EngineEvent> {
+        let Some(next_order_id) = self.next_order_id.checked_add(1) else {
+            return vec![EngineEvent::OrderRejected {
+                reason: AsterError::OrderIdExhausted,
+            }];
+        };
+        let Some(next_sequence_number) = self.next_sequence_number.checked_add(1) else {
+            return vec![EngineEvent::OrderRejected {
+                reason: AsterError::SequenceNumberExhausted,
+            }];
+        };
         let order = AcceptedOrder::new(
             OrderId::new(self.next_order_id),
             SequenceNumber::new(self.next_sequence_number),
@@ -127,8 +137,8 @@ impl AsterEngine {
 
         match self.match_and_maybe_rest(order, &mut events) {
             Ok(()) => {
-                self.next_order_id += 1;
-                self.next_sequence_number += 1;
+                self.next_order_id = next_order_id;
+                self.next_sequence_number = next_sequence_number;
                 events
             }
             Err(reason) => vec![EngineEvent::OrderRejected { reason }],
@@ -260,5 +270,59 @@ fn snapshot_level(level: &crate::PriceLevel) -> PriceLevelSnapshot {
 impl Default for AsterEngine {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::AsterEngine;
+    use crate::{
+        AsterError, EngineCommand, EngineEvent, OrderRequest, OrderType, ParticipantId, Quantity,
+        Side,
+    };
+
+    fn market_submission() -> EngineCommand {
+        EngineCommand::submit_order(OrderRequest::new(
+            ParticipantId::new(1),
+            Side::Buy,
+            OrderType::Market,
+            Quantity::new(1).expect("test quantity is positive"),
+        ))
+    }
+
+    #[test]
+    fn order_id_exhaustion_rejects_without_mutating_engine_state() {
+        let mut engine = AsterEngine::new();
+        engine.next_order_id = u64::MAX;
+        let before = engine.snapshot();
+
+        let events = engine.process_command(market_submission());
+
+        assert_eq!(
+            events,
+            vec![EngineEvent::OrderRejected {
+                reason: AsterError::OrderIdExhausted,
+            }]
+        );
+        assert_eq!(engine.snapshot(), before);
+        assert_eq!(engine.event_log(), events);
+    }
+
+    #[test]
+    fn sequence_exhaustion_rejects_without_mutating_engine_state() {
+        let mut engine = AsterEngine::new();
+        engine.next_sequence_number = u64::MAX;
+        let before = engine.snapshot();
+
+        let events = engine.process_command(market_submission());
+
+        assert_eq!(
+            events,
+            vec![EngineEvent::OrderRejected {
+                reason: AsterError::SequenceNumberExhausted,
+            }]
+        );
+        assert_eq!(engine.snapshot(), before);
+        assert_eq!(engine.event_log(), events);
     }
 }

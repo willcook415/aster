@@ -191,6 +191,19 @@ fn total_resting_quantity_sums_across_both_sides() {
 }
 
 #[test]
+fn rejects_quantity_that_would_overflow_book_total_across_levels() {
+    let mut book = OrderBook::new();
+    book.add_resting_order(accepted_limit_order(1, Side::Buy, price(1), u64::MAX))
+        .expect("maximum quantity fits in an empty book");
+
+    let result = book.add_resting_order(accepted_limit_order(2, Side::Sell, price(2), 1));
+
+    assert_eq!(result, Err(AsterError::QuantityOverflow));
+    assert_eq!(book.total_resting_quantity(), u64::MAX);
+    assert!(!book.contains_order(OrderId::new(2)));
+}
+
+#[test]
 fn duplicate_order_id_is_rejected() {
     let mut book = OrderBook::new();
 

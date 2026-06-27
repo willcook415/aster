@@ -1,18 +1,20 @@
 //! Engine output events.
 //!
-//! Events are facts emitted by the future engine after command processing. They
-//! are intentionally distinct from command intentions so later event logs,
-//! deterministic replay, and audit trails can reason about what actually
-//! happened without executing matching logic in this skeleton.
+//! Events are facts emitted by the engine after command processing. They are
+//! intentionally distinct from command intentions so event logs, deterministic
+//! replay, and audit trails can reason about what actually happened.
 
 use crate::{AcceptedOrder, AsterError, OrderId, ParticipantId, PriceTicks, Quantity};
 
-/// Fact emitted by the future engine after processing an input command.
+/// Fact emitted by the engine after processing an input command.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum EngineEvent {
     /// A submitted order was accepted and assigned engine metadata.
     OrderAccepted { order: AcceptedOrder },
-    /// A submitted order was rejected.
+    /// A valid submission was rejected because the engine could not perform it.
+    ///
+    /// Malformed raw or schema input fails before command processing with
+    /// `AsterError` and does not produce this event.
     OrderRejected { reason: AsterError },
     /// A cancel command successfully cancelled an order.
     OrderCancelled {
@@ -60,13 +62,13 @@ mod tests {
     #[test]
     fn order_rejected_carries_domain_error() {
         let event = EngineEvent::OrderRejected {
-            reason: AsterError::ZeroQuantity,
+            reason: AsterError::OrderIdExhausted,
         };
 
         assert_eq!(
             event,
             EngineEvent::OrderRejected {
-                reason: AsterError::ZeroQuantity,
+                reason: AsterError::OrderIdExhausted,
             }
         );
     }

@@ -10,7 +10,7 @@ pub enum AsterError {
     ZeroQuantity,
     /// Limit prices must be positive integer ticks.
     ZeroPrice,
-    /// Referenced order does not exist in the future engine state.
+    /// Referenced order does not exist in engine state.
     OrderNotFound,
     /// Referenced order is owned by a different participant.
     ParticipantMismatch,
@@ -20,13 +20,13 @@ pub enum AsterError {
     MarketOrderCannotRest,
     /// A resting order ID already exists in book storage.
     DuplicateOrderId,
-    /// Crossing limit orders require matching, which is not implemented yet.
-    CrossingOrderRequiresMatching,
-    /// Market orders require matching, which is not implemented yet.
-    MarketOrderRequiresMatching,
-    /// Cancellation execution is not implemented yet.
-    CancellationNotImplemented,
-    /// An accepted order or future engine state failed an invariant.
+    /// The engine cannot assign another order identifier.
+    OrderIdExhausted,
+    /// The engine cannot assign another priority sequence number.
+    SequenceNumberExhausted,
+    /// Resting quantity cannot be represented without overflow.
+    QuantityOverflow,
+    /// An accepted order or engine state failed an internal invariant.
     InvalidOrderState,
     /// A persisted schema record uses an unsupported schema version.
     UnsupportedSchemaVersion,
@@ -46,15 +46,9 @@ impl fmt::Display for AsterError {
             }
             Self::MarketOrderCannotRest => f.write_str("market orders cannot rest"),
             Self::DuplicateOrderId => f.write_str("order ID already exists"),
-            Self::CrossingOrderRequiresMatching => {
-                f.write_str("crossing order requires matching, which is not implemented")
-            }
-            Self::MarketOrderRequiresMatching => {
-                f.write_str("market order requires matching, which is not implemented")
-            }
-            Self::CancellationNotImplemented => {
-                f.write_str("cancellation execution is not implemented")
-            }
+            Self::OrderIdExhausted => f.write_str("order ID allocation is exhausted"),
+            Self::SequenceNumberExhausted => f.write_str("sequence number allocation is exhausted"),
+            Self::QuantityOverflow => f.write_str("resting quantity would overflow"),
             Self::InvalidOrderState => f.write_str("invalid order state"),
             Self::UnsupportedSchemaVersion => f.write_str("unsupported schema version"),
         }

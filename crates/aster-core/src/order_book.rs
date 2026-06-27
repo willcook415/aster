@@ -141,6 +141,9 @@ impl OrderBook {
         let OrderType::Limit { price } = order.order_type else {
             return Err(AsterError::MarketOrderCannotRest);
         };
+        self.total_resting_quantity()
+            .checked_add(order.quantity.as_u64())
+            .ok_or(AsterError::QuantityOverflow)?;
 
         let levels = match order.side {
             Side::Buy => &mut self.bids,

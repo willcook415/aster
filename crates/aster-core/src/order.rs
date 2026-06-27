@@ -58,7 +58,12 @@ pub struct AcceptedOrder {
 }
 
 impl AcceptedOrder {
-    /// Creates an accepted order from an inbound request and engine-assigned metadata.
+    /// Creates an accepted order from an inbound request and assigned metadata.
+    ///
+    /// `AsterEngine` is the authoritative allocator during normal command
+    /// processing. This low-level constructor remains public for explicit book
+    /// fixtures and schema conversion; callers using it are responsible for ID
+    /// and sequence uniqueness.
     pub const fn new(
         order_id: OrderId,
         sequence_number: SequenceNumber,

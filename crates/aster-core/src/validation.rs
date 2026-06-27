@@ -1,7 +1,7 @@
 //! Validation helpers for raw inbound values.
 //!
 //! Constructors on domain types enforce the current invariants. This module is
-//! intentionally small and exists as the future home for command-level
+//! intentionally small and exists as the home for command-level
 //! validation that should stay separate from matching logic.
 
 use crate::{AsterError, OrderRequest, PriceTicks, Quantity};

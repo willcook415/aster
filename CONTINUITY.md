@@ -3,7 +3,7 @@
 ## Snapshot
 
 - 2026-06-22 [USER]: Goal is Aster, a Rust central limit order book / exchange matching engine project.
-- 2026-06-27 [USER]: Current task adds deterministic mixed-session invariant, replay, event-log, cancellation, and quantity-accounting tests; no feature or matching changes.
+- 2026-06-27 [USER]: Current task tightens construction, rejection, internal-error, and checked-arithmetic boundaries before persistence.
 - 2026-06-22 [USER]: First credible MVP should prioritize deterministic matching, event logs, replayability, tests, benchmarks, and docs.
 - 2026-06-22 [CODE]: Workspace scaffold contains root Cargo workspace, `aster-core`, `aster-cli`, docs skeletons, README, `.gitignore`, and this ledger.
 - 2026-06-22 [CODE]: `aster-core` includes typed integer primitives, order request/accepted order models, small domain errors, and validation helpers.
@@ -19,6 +19,7 @@
 - 2026-06-22 [CODE]: `aster-core::schema` defines version 1 DTO records for commands, events, and snapshots with conversions to/from internal engine types.
 - 2026-06-27 [CODE]: `EngineSnapshot` includes ordered bid/ask levels, FIFO resting orders, complete accepted-order fields, and next allocation values.
 - 2026-06-27 [CODE]: Mixed-session invariant tests validate uncrossed books, ordered non-empty levels, FIFO, resting-order integrity, unique IDs, cancellation, replay, event logs, and explicit quantity accounting.
+- 2026-06-27 [CODE]: Allocation exhaustion and resting-quantity overflow fail explicitly without wrapping; obsolete unimplemented-feature errors were removed.
 - 2026-06-22 [ASSUMPTION]: Initial workspace uses Rust 2021 edition and no third-party dependencies.
 
 ## Decisions
@@ -32,7 +33,7 @@
 
 ## Done (recent)
 
-- 2026-06-22 [CODE]: Created workspace, docs scaffold, domain primitives, command/event models, FIFO `PriceLevel`, and passive bid/ask `OrderBook`.
+- 2026-06-27 [CODE]: Clarified malformed-input errors versus engine rejection events and documented the low-level accepted-order construction boundary.
 - 2026-06-22 [CODE]: Implemented `AsterEngine` with deterministic limit matching, market execution, cancellation, partial/full fills, and resting limit remainders.
 - 2026-06-22 [CODE]: Added in-memory replay, `EngineSnapshot`, and append-only in-memory event log; no persistence, serialization, command journaling, or event-log replay.
 - 2026-06-22 [CODE]: Added Criterion benchmark target for in-memory matching and replay workloads; no runtime benchmark dependency.
@@ -57,7 +58,7 @@
 
 ## Next
 
-- 2026-06-27 [USER]: Deterministic invariant-hardening milestone completed; next development direction is UNCONFIRMED.
+- 2026-06-27 [USER]: Correctness-boundary cleanup completed; next development direction is UNCONFIRMED.
 
 ## Open questions
 
@@ -85,3 +86,4 @@
 - 2026-06-22 [TOOL]: After schema DTO milestone, `cargo fmt`, `cargo clippy --workspace --all-targets -- -D warnings`, `cargo test --workspace`, and `cargo bench -p aster-core --no-run` completed successfully; 14 schema integration tests added.
 - 2026-06-27 [TOOL]: Full-state snapshots passed `cargo fmt`, clippy with warnings denied, 110 workspace tests, and benchmark compilation.
 - 2026-06-27 [TOOL]: Invariant hardening passed `cargo fmt`, clippy with warnings denied, all 114 workspace tests, benchmark compilation, and `git diff --check`.
+- 2026-06-27 [TOOL]: Boundary cleanup passed `cargo fmt`, clippy with warnings denied, all 120 workspace tests, benchmark compilation, and `git diff --check`.

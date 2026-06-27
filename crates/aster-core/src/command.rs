@@ -1,12 +1,12 @@
 //! Engine input commands.
 //!
-//! Commands are intentions submitted to the future matching engine. They do not
+//! Commands are intentions submitted to the matching engine. They do not
 //! assert that any state transition has happened. Keeping commands separate
-//! from emitted events supports deterministic replay and auditability later.
+//! from emitted events supports deterministic replay and auditability.
 
 use crate::{OrderId, OrderRequest, ParticipantId};
 
-/// Inbound command sent to the future engine.
+/// Inbound command sent to the engine.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum EngineCommand {
     /// Request to submit a new order.

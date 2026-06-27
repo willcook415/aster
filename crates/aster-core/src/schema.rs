@@ -135,9 +135,9 @@ pub enum AsterErrorDtoV1 {
     PriceLevelMismatch,
     MarketOrderCannotRest,
     DuplicateOrderId,
-    CrossingOrderRequiresMatching,
-    MarketOrderRequiresMatching,
-    CancellationNotImplemented,
+    OrderIdExhausted,
+    SequenceNumberExhausted,
+    QuantityOverflow,
     InvalidOrderState,
     UnsupportedSchemaVersion,
 }

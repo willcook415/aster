@@ -795,3 +795,36 @@ fn market_orders_with_no_resting_remainder_cannot_be_cancelled() {
         }]
     );
 }
+
+#[test]
+fn resting_quantity_overflow_emits_order_rejected_without_consuming_allocation() {
+    let mut engine = AsterEngine::new();
+    let first = engine.process_command(EngineCommand::submit_order(limit_request(
+        Side::Buy,
+        price(100),
+        u64::MAX,
+    )));
+    assert_eq!(accepted_order_from(&first).order_id.as_u64(), 1);
+
+    let rejected = engine.process_command(EngineCommand::submit_order(limit_request(
+        Side::Buy,
+        price(100),
+        1,
+    )));
+    assert_eq!(
+        rejected,
+        vec![EngineEvent::OrderRejected {
+            reason: AsterError::QuantityOverflow,
+        }]
+    );
+
+    engine.process_command(cancel(OrderId::new(1), 1));
+    let next = engine.process_command(EngineCommand::submit_order(limit_request(
+        Side::Buy,
+        price(99),
+        1,
+    )));
+    let accepted = accepted_order_from(&next);
+    assert_eq!(accepted.order_id.as_u64(), 2);
+    assert_eq!(accepted.sequence_number.as_u64(), 2);
+}

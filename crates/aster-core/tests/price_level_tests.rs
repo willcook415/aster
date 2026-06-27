@@ -167,6 +167,37 @@ fn total_quantity_sums_resting_quantities() {
 }
 
 #[test]
+fn rejects_quantity_that_would_overflow_level_total() {
+    let mut level = PriceLevel::new(price(100));
+    level
+        .push_back(accepted_limit_order(1, price(100), u64::MAX))
+        .expect("maximum quantity fits in an empty level");
+
+    let result = level.push_back(accepted_limit_order(2, price(100), 1));
+
+    assert_eq!(result, Err(AsterError::QuantityOverflow));
+    assert_eq!(level.len(), 1);
+    assert_eq!(level.total_quantity(), u64::MAX);
+}
+
+#[test]
+fn rejects_front_quantity_change_that_would_overflow_level_total() {
+    let mut level = PriceLevel::new(price(100));
+    level
+        .push_back(accepted_limit_order(1, price(100), 1))
+        .expect("first order fits");
+    level
+        .push_back(accepted_limit_order(2, price(100), u64::MAX - 1))
+        .expect("level total remains representable");
+
+    let result = level.reduce_front_quantity(quantity(2));
+
+    assert_eq!(result, Err(AsterError::QuantityOverflow));
+    assert_eq!(level.front().expect("front remains").quantity.as_u64(), 1);
+    assert_eq!(level.total_quantity(), u64::MAX);
+}
+
+#[test]
 fn contains_order_detects_present_and_missing_order_ids() {
     let mut level = PriceLevel::new(price(100));
 

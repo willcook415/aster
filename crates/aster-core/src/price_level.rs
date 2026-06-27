@@ -44,14 +44,19 @@ impl PriceLevel {
     pub fn total_quantity(&self) -> u64 {
         self.orders
             .iter()
-            .map(|order| order.quantity.as_u64())
-            .sum()
+            .try_fold(0_u64, |total, order| {
+                total.checked_add(order.quantity.as_u64())
+            })
+            .expect("PriceLevel rejects quantity overflow when orders are inserted")
     }
 
     /// Adds a resting limit order to the back of the FIFO queue.
     pub fn push_back(&mut self, order: AcceptedOrder) -> Result<(), AsterError> {
         match order.order_type {
             OrderType::Limit { price } if price == self.price => {
+                self.total_quantity()
+                    .checked_add(order.quantity.as_u64())
+                    .ok_or(AsterError::QuantityOverflow)?;
                 self.orders.push_back(order);
                 Ok(())
             }
@@ -72,6 +77,20 @@ impl PriceLevel {
 
     /// Reduces the oldest resting order without changing its FIFO priority.
     pub fn reduce_front_quantity(&mut self, new_quantity: Quantity) -> Result<(), AsterError> {
+        let current_front_quantity = self
+            .orders
+            .front()
+            .ok_or(AsterError::InvalidOrderState)?
+            .quantity
+            .as_u64();
+        let quantity_without_front = self
+            .total_quantity()
+            .checked_sub(current_front_quantity)
+            .ok_or(AsterError::InvalidOrderState)?;
+        quantity_without_front
+            .checked_add(new_quantity.as_u64())
+            .ok_or(AsterError::QuantityOverflow)?;
+
         let front = self
             .orders
             .front_mut()

@@ -1,8 +1,8 @@
 use aster_core::{
-    replay_commands, AcceptedOrder, AsterError, CommandDtoV1, CommandRecordV1, EngineCommand,
-    EngineEvent, EngineSnapshot, EventRecordV1, OrderId, OrderRequest, OrderType, OrderTypeDtoV1,
-    ParticipantId, PriceTicks, Quantity, SequenceNumber, Side, SideDtoV1, SnapshotRecordV1,
-    ASTER_SCHEMA_VERSION,
+    replay_commands, AcceptedOrder, AcceptedOrderDtoV1, AsterError, CommandDtoV1, CommandRecordV1,
+    EngineCommand, EngineEvent, EngineSnapshot, EventDtoV1, EventRecordV1, OrderId, OrderRequest,
+    OrderType, OrderTypeDtoV1, ParticipantId, PriceTicks, Quantity, SequenceNumber, Side,
+    SideDtoV1, SnapshotRecordV1, ASTER_SCHEMA_VERSION,
 };
 use serde_json::Value;
 
@@ -52,10 +52,29 @@ fn order_accepted_event_round_trips_through_json() {
 #[test]
 fn order_rejected_event_round_trips_through_json() {
     let event = EngineEvent::OrderRejected {
-        reason: AsterError::ZeroQuantity,
+        reason: AsterError::OrderIdExhausted,
     };
 
     assert_eq!(round_trip_event(event), event);
+}
+
+#[test]
+fn zero_quantity_in_accepted_order_event_record_is_rejected() {
+    let record = EventRecordV1 {
+        schema_version: ASTER_SCHEMA_VERSION,
+        event: EventDtoV1::OrderAccepted {
+            order: AcceptedOrderDtoV1 {
+                order_id: 1,
+                participant_id: 1,
+                side: SideDtoV1::Buy,
+                order_type: OrderTypeDtoV1::Limit { price: 100 },
+                quantity: 0,
+                sequence_number: 1,
+            },
+        },
+    };
+
+    assert_eq!(EngineEvent::try_from(record), Err(AsterError::ZeroQuantity));
 }
 
 #[test]
