@@ -10,9 +10,9 @@ Aster is a core matching-engine project. Its first milestone is a small, determi
 
 Aster is not a trading bot, stock predictor, crypto bot, dashboard-first application, market-data product, or generic fintech UI project. Dashboards, WebSockets, persistence, authentication, FIX, and advanced exchange layers are intentionally out of scope until the core engine is credible.
 
-## Intended MVP
+## Implemented Core
 
-The initial MVP should include:
+The current in-memory core includes:
 
 - Order model
 - Bid and ask order book
@@ -24,11 +24,12 @@ The initial MVP should include:
 - Partial and full fills
 - Resting unfilled limit orders
 - Cancellation by order ID
-- Event log
-- Deterministic replay
-- Unit tests
-- Benchmarks
-- Documentation
+- Ordered in-memory event log of emitted facts
+- Deterministic command replay
+- Full deterministic snapshots of visible book and allocator state
+- Versioned schema DTOs with in-memory JSON round-trip tests
+- Unit, integration, replay, schema, and invariant-heavy tests
+- Focused Criterion benchmarks
 
 ## Repository Layout
 
@@ -80,4 +81,11 @@ File persistence is not implemented yet. The planned boundary is documented in [
 
 ## Current Status
 
-Aster has an in-memory matching core with limit orders, market orders, cancellation, an event log, replay scaffolding, tests, focused benchmarks, and a small deterministic CLI demo. Persistence, serialization, interactive CLI workflows, and production-hardening work are not implemented yet.
+Aster has an in-memory matching core with limit and market orders, cancellation,
+explicit events, full snapshots, command replay, checked allocation and quantity
+boundaries, focused benchmarks, and a deterministic CLI demo. Versioned command,
+event, and snapshot DTOs can be converted to and from JSON in memory.
+
+There is no file I/O, JSONL session format, durable command or event log,
+database, networking, or production exchange hardening. Aster should not be
+treated as production-grade financial infrastructure.

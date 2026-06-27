@@ -4,15 +4,52 @@
 
 Correctness and determinism should be proven before performance work.
 
-## Unit Tests
+## Current Coverage
 
-TODO: Cover invalid orders, passive resting, best bid and ask updates, crossing limit orders, FIFO, better-price priority, partial fills, full fills, market sweeps, unfilled market expiry, cancellation, and replay.
+The workspace currently has 120 passing tests. Coverage is divided across:
 
-## Replay Tests
+- Unit tests for typed constructors, commands, events, allocation exhaustion,
+  and primitive validation.
+- Engine integration tests for passive and crossing limits, market orders,
+  price priority, FIFO, partial and full fills, market expiry, cancellation,
+  rejection events, and allocation behavior.
+- `OrderBook` and `PriceLevel` tests for ordered levels, FIFO storage, duplicate
+  IDs, invalid resting orders, cancellation support, and checked quantity
+  totals.
+- Event-log tests for append order and equality with events returned from
+  command processing.
+- Replay tests comparing directly produced events and complete snapshots with
+  replay results.
+- Schema tests for command, event, and full-snapshot JSON round trips, malformed
+  values, integer price representation, and unsupported versions.
+- Mixed-session invariant tests covering uncrossed books, deterministic level
+  order, FIFO identity, unique resting IDs, cancellation invariants, full replay
+  equality, and explicit quantity accounting.
 
-TODO: Assert that the same input sequence produces identical accepted or rejected commands, trades, event logs, and final book state.
+## Deterministic Replay Verification
 
-## Benchmark Tests
+Replay processes the same ordered command sequence through a fresh engine.
+Tests compare the complete event sequence and full final snapshot, including
+ordered levels, FIFO resting orders, remaining quantities, IDs, sequence
+numbers, and next allocation values.
 
-TODO: Add benchmarks only after the matching rules are implemented and covered by tests.
+## Future Improvements
 
+Property-based and independent model-based testing are not implemented yet.
+They remain useful future additions after the deterministic table-driven
+invariants are stable. The current replay tests prove repeatability through the
+same engine implementation; they are not an independent matching oracle.
+
+## Required Checks
+
+```bash
+cargo fmt
+cargo clippy --workspace --all-targets -- -D warnings
+cargo test --workspace
+```
+
+Benchmark compilation is also checked with:
+
+```bash
+cargo bench -p aster-core --no-run
+```

@@ -2,7 +2,9 @@
 
 ## Scope
 
-Aster currently supports limit-order matching, market-order matching, and cancellation of resting orders. Replay, persistence, and serialization remain out of scope.
+Aster supports in-memory limit-order matching, market-order matching, partial
+and full fills, and cancellation of resting orders. In-memory replay and schema
+DTO serialization exist. Durable persistence does not.
 
 Non-crossing limit orders rest on the appropriate side of the book. Crossing limit orders are accepted, matched, and any unfilled remainder rests.
 
@@ -55,3 +57,20 @@ Prices use integer ticks via `PriceTicks`. Quantities use integer units via `Qua
 Accepted limit and market orders emit `OrderAccepted` first, followed by one `TradeExecuted` event per fill.
 
 Successful cancellation emits `OrderCancelled`. Failed cancellation emits `CancelRejected`.
+
+## Rejection And Error Boundaries
+
+Malformed values are rejected before engine processing. For example, zero
+quantity, zero limit price, malformed schema records, and unsupported schema
+versions return `AsterError` from constructors or schema conversion.
+
+A valid submission that the engine cannot perform because order-ID allocation,
+sequence allocation, or representable resting quantity is exhausted emits
+`OrderRejected`. A rejected submission does not consume an order ID or sequence
+number.
+
+Cancellation failures emit `CancelRejected`. Missing orders use
+`OrderNotFound`; an ownership mismatch uses `ParticipantMismatch`.
+
+Impossible book or matching states use explicit internal `AsterError` values;
+they are not silently ignored.

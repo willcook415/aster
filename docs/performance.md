@@ -8,7 +8,7 @@ Aster has focused Criterion benchmarks for the in-memory matching core. No produ
 
 Correctness, deterministic state transitions, and clear event semantics come before optimization.
 
-## Future Benchmarks
+## Benchmark Suite
 
 Run benchmarks with:
 
@@ -30,7 +30,9 @@ The mixed sessions include passive limit orders, crossing limit orders, market o
 
 ## Non-Goals
 
-Current benchmarks do not measure file persistence, serialization, networking, multi-symbol routing, database I/O, UI paths, or real market data ingestion.
+Current benchmarks do not measure file persistence, schema serialization,
+networking, multi-symbol routing, database I/O, UI paths, or real market data
+ingestion.
 
 ## Reporting
 

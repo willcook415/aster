@@ -9,7 +9,7 @@ The core principle is:
 ```text
 Command log = canonical replay input
 Event log = audit output
-Snapshot = deterministic state summary
+Snapshot = deterministic state summary and checkpoint
 ```
 
 Persistence should preserve the distinction between what participants asked the engine to do, what the engine actually did, and what the book looked like after processing.
@@ -42,7 +42,8 @@ The event log is an audit trail of engine facts: accepted orders, rejected order
 
 ### Snapshot
 
-A snapshot records deterministic engine and book state at a point in time.
+A snapshot records deterministic engine and complete visible book state at a
+point in time.
 
 It answers:
 
@@ -67,6 +68,7 @@ replay as the source of truth.
 - Command, event, and snapshot records can round-trip through JSON in memory.
 - There is no file IO.
 - There are no JSONL session files.
+- There is no durable command journal or recovery workflow.
 - Schema version validation exists for DTO-to-engine conversion.
 
 ## Future State

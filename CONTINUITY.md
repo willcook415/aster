@@ -3,7 +3,7 @@
 ## Snapshot
 
 - 2026-06-22 [USER]: Goal is Aster, a Rust central limit order book / exchange matching engine project.
-- 2026-06-27 [USER]: Current task tightens construction, rejection, internal-error, and checked-arithmetic boundaries before persistence.
+- 2026-06-27 [USER]: Current task aligns README and architecture, matching, testing, performance, persistence, and limitations docs with implemented code.
 - 2026-06-22 [USER]: First credible MVP should prioritize deterministic matching, event logs, replayability, tests, benchmarks, and docs.
 - 2026-06-22 [CODE]: Workspace scaffold contains root Cargo workspace, `aster-core`, `aster-cli`, docs skeletons, README, `.gitignore`, and this ledger.
 - 2026-06-22 [CODE]: `aster-core` includes typed integer primitives, order request/accepted order models, small domain errors, and validation helpers.
@@ -35,7 +35,7 @@
 
 - 2026-06-27 [CODE]: Clarified malformed-input errors versus engine rejection events and documented the low-level accepted-order construction boundary.
 - 2026-06-22 [CODE]: Implemented `AsterEngine` with deterministic limit matching, market execution, cancellation, partial/full fills, and resting limit remainders.
-- 2026-06-22 [CODE]: Added in-memory replay, `EngineSnapshot`, and append-only in-memory event log; no persistence, serialization, command journaling, or event-log replay.
+- 2026-06-27 [CODE]: Documentation now distinguishes implemented in-memory replay/schema serialization from absent file persistence and durable sessions.
 - 2026-06-22 [CODE]: Added Criterion benchmark target for in-memory matching and replay workloads; no runtime benchmark dependency.
 - 2026-06-22 [CODE]: Replaced placeholder CLI with deterministic demo output and documented `cargo run -p aster-cli`.
 - 2026-06-27 [CODE]: Added deterministic full-snapshot invariant and accounting coverage for complex command sequences.
@@ -58,7 +58,7 @@
 
 ## Next
 
-- 2026-06-27 [USER]: Correctness-boundary cleanup completed; next development direction is UNCONFIRMED.
+- 2026-06-27 [USER]: Documentation-drift cleanup completed; next development direction is UNCONFIRMED.
 
 ## Open questions
 
@@ -87,3 +87,4 @@
 - 2026-06-27 [TOOL]: Full-state snapshots passed `cargo fmt`, clippy with warnings denied, 110 workspace tests, and benchmark compilation.
 - 2026-06-27 [TOOL]: Invariant hardening passed `cargo fmt`, clippy with warnings denied, all 114 workspace tests, benchmark compilation, and `git diff --check`.
 - 2026-06-27 [TOOL]: Boundary cleanup passed `cargo fmt`, clippy with warnings denied, all 120 workspace tests, benchmark compilation, and `git diff --check`.
+- 2026-06-27 [TOOL]: Documentation cleanup passed format check, clippy with warnings denied, all 120 workspace tests, benchmark compilation, and `git diff --check`.
