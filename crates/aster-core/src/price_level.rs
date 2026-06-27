@@ -101,4 +101,9 @@ impl PriceLevel {
     pub fn get_order(&self, order_id: OrderId) -> Option<&AcceptedOrder> {
         self.orders.iter().find(|order| order.order_id == order_id)
     }
+
+    /// Iterates over resting orders from oldest to newest.
+    pub(crate) fn orders_in_fifo_order(&self) -> impl Iterator<Item = &AcceptedOrder> {
+        self.orders.iter()
+    }
 }

@@ -28,6 +28,8 @@ pub enum AsterError {
     CancellationNotImplemented,
     /// An accepted order or future engine state failed an invariant.
     InvalidOrderState,
+    /// A persisted schema record uses an unsupported schema version.
+    UnsupportedSchemaVersion,
 }
 
 impl fmt::Display for AsterError {
@@ -54,6 +56,7 @@ impl fmt::Display for AsterError {
                 f.write_str("cancellation execution is not implemented")
             }
             Self::InvalidOrderState => f.write_str("invalid order state"),
+            Self::UnsupportedSchemaVersion => f.write_str("unsupported schema version"),
         }
     }
 }

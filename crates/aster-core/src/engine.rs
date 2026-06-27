@@ -2,8 +2,7 @@
 //!
 //! `AsterEngine` owns order ID and sequence number allocation. At this stage it
 //! accepts limit and market orders, matches them against resting liquidity, and
-//! rests only remaining limit quantity. Cancellation commands are rejected until
-//! cancellation execution exists.
+//! rests only remaining limit quantity, and cancels owned resting orders.
 
 use crate::{
     AcceptedOrder, AsterError, EngineCommand, EngineEvent, OrderBook, OrderId, OrderRequest,
@@ -22,7 +21,14 @@ pub struct AsterEngine {
     next_sequence_number: u64,
 }
 
-/// Deterministic summary of externally relevant engine state.
+/// Resting orders at one price in deterministic FIFO order.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PriceLevelSnapshot {
+    pub price: PriceTicks,
+    pub orders: Vec<AcceptedOrder>,
+}
+
+/// Deterministic representation of complete visible engine state.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct EngineSnapshot {
     pub best_bid: Option<PriceTicks>,
@@ -30,6 +36,10 @@ pub struct EngineSnapshot {
     pub bid_level_count: usize,
     pub ask_level_count: usize,
     pub total_resting_quantity: u64,
+    pub bid_levels: Vec<PriceLevelSnapshot>,
+    pub ask_levels: Vec<PriceLevelSnapshot>,
+    pub next_order_id: OrderId,
+    pub next_sequence_number: SequenceNumber,
 }
 
 impl AsterEngine {
@@ -92,6 +102,18 @@ impl AsterEngine {
             bid_level_count: self.order_book.bid_level_count(),
             ask_level_count: self.order_book.ask_level_count(),
             total_resting_quantity: self.order_book.total_resting_quantity(),
+            bid_levels: self
+                .order_book
+                .bid_levels_in_matching_order()
+                .map(snapshot_level)
+                .collect(),
+            ask_levels: self
+                .order_book
+                .ask_levels_in_matching_order()
+                .map(snapshot_level)
+                .collect(),
+            next_order_id: OrderId::new(self.next_order_id),
+            next_sequence_number: SequenceNumber::new(self.next_sequence_number),
         }
     }
 
@@ -225,6 +247,13 @@ impl AsterEngine {
                 .best_bid_price()
                 .is_some_and(|best_bid| price <= best_bid),
         }
+    }
+}
+
+fn snapshot_level(level: &crate::PriceLevel) -> PriceLevelSnapshot {
+    PriceLevelSnapshot {
+        price: level.price(),
+        orders: level.orders_in_fifo_order().copied().collect(),
     }
 }
 

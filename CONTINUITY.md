@@ -3,7 +3,7 @@
 ## Snapshot
 
 - 2026-06-22 [USER]: Goal is Aster, a Rust central limit order book / exchange matching engine project.
-- 2026-06-22 [USER]: Current task is a deterministic `aster-cli` demo for the in-memory matching core; no interactive CLI, persistence, serialization, dashboards, networking, or matching-rule changes.
+- 2026-06-27 [USER]: Current task strengthens deterministic replay snapshots with complete visible book and allocator state; no persistence or matching-rule changes.
 - 2026-06-22 [USER]: First credible MVP should prioritize deterministic matching, event logs, replayability, tests, benchmarks, and docs.
 - 2026-06-22 [CODE]: Workspace scaffold contains root Cargo workspace, `aster-core`, `aster-cli`, docs skeletons, README, `.gitignore`, and this ledger.
 - 2026-06-22 [CODE]: `aster-core` includes typed integer primitives, order request/accepted order models, small domain errors, and validation helpers.
@@ -15,6 +15,9 @@
 - 2026-06-22 [CODE]: `AsterEngine` retains an in-memory append-only event log of emitted `EngineEvent`s.
 - 2026-06-22 [CODE]: `aster-core` has Criterion benchmarks for passive insertion, crossing matching, market sweeps, cancellation, mixed sessions, and replay.
 - 2026-06-22 [CODE]: `aster-cli` runs a deterministic in-memory demo session covering passive liquidity, crossing limit matching, market sweep, successful cancellation, rejected cancellation, final snapshot, and event-log length.
+- 2026-06-22 [CODE]: `docs/persistence.md` documents the future boundary: command log as canonical replay input, event log as audit output, snapshot as deterministic state summary.
+- 2026-06-22 [CODE]: `aster-core::schema` defines version 1 DTO records for commands, events, and snapshots with conversions to/from internal engine types.
+- 2026-06-27 [CODE]: `EngineSnapshot` includes ordered bid/ask levels, FIFO resting orders, complete accepted-order fields, and next allocation values.
 - 2026-06-22 [ASSUMPTION]: Initial workspace uses Rust 2021 edition and no third-party dependencies.
 
 ## Decisions
@@ -28,44 +31,31 @@
 
 ## Done (recent)
 
-- 2026-06-22 [CODE]: Created initial Cargo workspace with core library and CLI binary crates.
-- 2026-06-22 [CODE]: Added documentation scaffold for architecture, matching rules, testing, performance, and limitations.
-- 2026-06-22 [CODE]: Added finance-safe domain primitives and order modelling skeletons without order book or matching logic.
-- 2026-06-22 [CODE]: Added command/event model skeletons without execution, matching, replay, persistence, or serialization.
-- 2026-06-22 [CODE]: Added single-price `PriceLevel` with FIFO, validation for resting limit orders, local removal, and tests; no full book or matching.
-- 2026-06-22 [CODE]: Added passive bid/ask `OrderBook` storage with best bid/ask queries and duplicate order ID rejection; no crossing or matching.
-- 2026-06-22 [CODE]: Added minimal `AsterEngine` acceptance shell; crossing limits, markets, and cancels emit explicit rejection events.
-- 2026-06-22 [CODE]: Implemented focused limit-order matching against resting liquidity with price-time priority, partial fills, full fills, and remainder resting.
-- 2026-06-22 [CODE]: Implemented market order execution using existing matching flow; unfilled market quantity expires and never rests.
-- 2026-06-22 [CODE]: Implemented cancellation execution for resting orders with participant ownership checks and best-price updates.
-- 2026-06-22 [CODE]: Added in-memory replay scaffolding and `EngineSnapshot` for direct-vs-replay determinism tests; no persistence or serialization.
-- 2026-06-22 [CODE]: Added in-engine append-only event log with read-only access and log clearing; no persistence, serialization, command journaling, or event-log replay.
+- 2026-06-22 [CODE]: Created workspace, docs scaffold, domain primitives, command/event models, FIFO `PriceLevel`, and passive bid/ask `OrderBook`.
+- 2026-06-22 [CODE]: Implemented `AsterEngine` with deterministic limit matching, market execution, cancellation, partial/full fills, and resting limit remainders.
+- 2026-06-22 [CODE]: Added in-memory replay, `EngineSnapshot`, and append-only in-memory event log; no persistence, serialization, command journaling, or event-log replay.
 - 2026-06-22 [CODE]: Added Criterion benchmark target for in-memory matching and replay workloads; no runtime benchmark dependency.
 - 2026-06-22 [CODE]: Replaced placeholder CLI with deterministic demo output and documented `cargo run -p aster-cli`.
+- 2026-06-22 [CODE]: Added persistence design documentation without implementing serialization or file IO.
+- 2026-06-27 [CODE]: Strengthened engine/schema snapshots and replay tests to compare complete deterministic visible state; no file IO or matching changes.
 
 ## Working set
 
-- 2026-06-22 [CODE]: `Cargo.toml`
-- 2026-06-22 [CODE]: `crates/aster-core/src/lib.rs`
-- 2026-06-22 [CODE]: `crates/aster-core/src/command.rs`
-- 2026-06-22 [CODE]: `crates/aster-core/src/engine.rs`
-- 2026-06-22 [CODE]: `crates/aster-core/src/event.rs`
-- 2026-06-22 [CODE]: `crates/aster-core/src/order_book.rs`
-- 2026-06-22 [CODE]: `crates/aster-core/src/price_level.rs`
-- 2026-06-22 [CODE]: `crates/aster-core/src/replay.rs`
+- 2026-06-22 [CODE]: `crates/aster-core/src/`
+- 2026-06-22 [CODE]: `crates/aster-core/tests/`
+- 2026-06-22 [CODE]: `crates/aster-core/src/schema.rs`
+- 2026-06-22 [CODE]: `crates/aster-core/src/schema/`
+- 2026-06-22 [CODE]: `crates/aster-core/tests/schema_tests.rs`
 - 2026-06-22 [CODE]: `crates/aster-core/benches/engine_benchmarks.rs`
-- 2026-06-22 [CODE]: `crates/aster-core/src/types.rs`
-- 2026-06-22 [CODE]: `crates/aster-core/src/order.rs`
-- 2026-06-22 [CODE]: `crates/aster-core/src/errors.rs`
-- 2026-06-22 [CODE]: `crates/aster-core/src/validation.rs`
 - 2026-06-22 [CODE]: `crates/aster-cli/src/main.rs`
 - 2026-06-22 [CODE]: `README.md`
-- 2026-06-22 [CODE]: `docs/`
+- 2026-06-22 [CODE]: `docs/architecture.md`
+- 2026-06-22 [CODE]: `docs/persistence.md`
 - 2026-06-22 [CODE]: `CONTINUITY.md`
 
 ## Next
 
-- 2026-06-22 [USER]: Next likely milestone is serialization/persistence planning after CLI demo verification.
+- 2026-06-27 [USER]: Full-state replay verification milestone completed; next development direction is UNCONFIRMED.
 
 ## Open questions
 
@@ -89,3 +79,6 @@
 - 2026-06-22 [TOOL]: After in-memory replay milestone, `cargo fmt`, `cargo clippy --workspace --all-targets -- -D warnings`, and `cargo test --workspace` completed successfully; 83 core tests passed.
 - 2026-06-22 [TOOL]: After in-engine event log milestone, `cargo fmt`, `cargo clippy --workspace --all-targets -- -D warnings`, and `cargo test --workspace` completed successfully; 93 core tests passed.
 - 2026-06-22 [TOOL]: After benchmark milestone, `cargo fmt`, `cargo clippy --workspace --all-targets -- -D warnings`, `cargo test --workspace`, and `cargo bench -p aster-core` completed successfully; 93 core tests passed and 7 Criterion workloads executed.
+- 2026-06-22 [TOOL]: After persistence-design doc milestone, `cargo fmt`, `cargo clippy --workspace --all-targets -- -D warnings`, and `cargo test --workspace` completed successfully; no benchmark code changed.
+- 2026-06-22 [TOOL]: After schema DTO milestone, `cargo fmt`, `cargo clippy --workspace --all-targets -- -D warnings`, `cargo test --workspace`, and `cargo bench -p aster-core --no-run` completed successfully; 14 schema integration tests added.
+- 2026-06-27 [TOOL]: Full-state snapshots passed `cargo fmt`, clippy with warnings denied, 110 workspace tests, and benchmark compilation.

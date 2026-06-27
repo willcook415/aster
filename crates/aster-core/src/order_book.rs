@@ -2,9 +2,9 @@
 //!
 //! `OrderBook` currently stores already-accepted resting limit orders for a
 //! single instrument. Best-price selection across levels is handled here, while
-//! FIFO within each price level is delegated to `PriceLevel`. Crossing checks,
-//! trade execution, cancellation execution, replay, and persistence belong to
-//! future modules.
+//! FIFO within each price level is delegated to `PriceLevel`. Matching and
+//! cancellation are coordinated by the engine, while persistence remains a
+//! future boundary.
 
 use std::collections::{BTreeMap, HashMap};
 
@@ -88,6 +88,16 @@ impl OrderBook {
             .chain(self.asks.values())
             .map(PriceLevel::total_quantity)
             .sum()
+    }
+
+    /// Iterates over bid levels from best price to worst price.
+    pub(crate) fn bid_levels_in_matching_order(&self) -> impl Iterator<Item = &PriceLevel> {
+        self.bids.values().rev()
+    }
+
+    /// Iterates over ask levels from best price to worst price.
+    pub(crate) fn ask_levels_in_matching_order(&self) -> impl Iterator<Item = &PriceLevel> {
+        self.asks.values()
     }
 
     /// Cancels a resting order if it exists and belongs to the participant.

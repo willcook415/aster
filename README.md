@@ -45,6 +45,7 @@ The initial MVP should include:
 |   |-- matching-rules.md
 |   |-- testing-strategy.md
 |   |-- performance.md
+|   |-- persistence.md
 |   `-- limitations.md
 |-- AGENTS.md
 |-- CONTINUITY.md
@@ -72,6 +73,10 @@ This runs a deterministic in-memory demo session that submits passive liquidity,
 ```bash
 cargo bench -p aster-core
 ```
+
+## Persistence Direction
+
+File persistence is not implemented yet. The planned boundary is documented in [docs/persistence.md](docs/persistence.md): command logs are canonical replay input, event logs are audit output, and snapshots are deterministic state summaries. Versioned schema DTOs now support in-memory JSON round trips.
 
 ## Current Status
 
