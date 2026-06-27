@@ -3,7 +3,7 @@
 ## Snapshot
 
 - 2026-06-22 [USER]: Goal is Aster, a Rust central limit order book / exchange matching engine project.
-- 2026-06-27 [USER]: Current task aligns README and architecture, matching, testing, performance, persistence, and limitations docs with implemented code.
+- 2026-06-27 [USER]: Current task adds golden V1 JSON fixtures and schema-boundary stability/negative tests without persistence or schema changes.
 - 2026-06-22 [USER]: First credible MVP should prioritize deterministic matching, event logs, replayability, tests, benchmarks, and docs.
 - 2026-06-22 [CODE]: Workspace scaffold contains root Cargo workspace, `aster-core`, `aster-cli`, docs skeletons, README, `.gitignore`, and this ledger.
 - 2026-06-22 [CODE]: `aster-core` includes typed integer primitives, order request/accepted order models, small domain errors, and validation helpers.
@@ -20,6 +20,7 @@
 - 2026-06-27 [CODE]: `EngineSnapshot` includes ordered bid/ask levels, FIFO resting orders, complete accepted-order fields, and next allocation values.
 - 2026-06-27 [CODE]: Mixed-session invariant tests validate uncrossed books, ordered non-empty levels, FIFO, resting-order integrity, unique IDs, cancellation, replay, event logs, and explicit quantity accounting.
 - 2026-06-27 [CODE]: Allocation exhaustion and resting-quantity overflow fail explicitly without wrapping; obsolete unimplemented-feature errors were removed.
+- 2026-06-27 [CODE]: Nine golden V1 fixtures lock command, event, and full-snapshot JSON shapes using compile-time test assets.
 - 2026-06-22 [ASSUMPTION]: Initial workspace uses Rust 2021 edition and no third-party dependencies.
 
 ## Decisions
@@ -37,7 +38,7 @@
 - 2026-06-22 [CODE]: Implemented `AsterEngine` with deterministic limit matching, market execution, cancellation, partial/full fills, and resting limit remainders.
 - 2026-06-27 [CODE]: Documentation now distinguishes implemented in-memory replay/schema serialization from absent file persistence and durable sessions.
 - 2026-06-22 [CODE]: Added Criterion benchmark target for in-memory matching and replay workloads; no runtime benchmark dependency.
-- 2026-06-22 [CODE]: Replaced placeholder CLI with deterministic demo output and documented `cargo run -p aster-cli`.
+- 2026-06-27 [CODE]: Added golden fixture deserialization, DTO serialization-shape, domain-conversion, missing-field, malformed-value, and version tests.
 - 2026-06-27 [CODE]: Added deterministic full-snapshot invariant and accounting coverage for complex command sequences.
 - 2026-06-27 [CODE]: Strengthened engine/schema snapshots and replay tests to compare complete deterministic visible state; no file IO or matching changes.
 
@@ -49,7 +50,7 @@
 - 2026-06-22 [CODE]: `crates/aster-core/src/schema/`
 - 2026-06-22 [CODE]: `crates/aster-core/tests/schema_tests.rs`
 - 2026-06-27 [CODE]: `crates/aster-core/tests/invariant_tests.rs`
-- 2026-06-22 [CODE]: `crates/aster-core/benches/engine_benchmarks.rs`
+- 2026-06-27 [CODE]: `crates/aster-core/tests/fixtures/schema/v1/`
 - 2026-06-22 [CODE]: `crates/aster-cli/src/main.rs`
 - 2026-06-22 [CODE]: `README.md`
 - 2026-06-22 [CODE]: `docs/architecture.md`
@@ -58,7 +59,7 @@
 
 ## Next
 
-- 2026-06-27 [USER]: Documentation-drift cleanup completed; next development direction is UNCONFIRMED.
+- 2026-06-27 [USER]: Golden V1 schema-fixture milestone completed; next development direction is UNCONFIRMED.
 
 ## Open questions
 
@@ -67,7 +68,6 @@
 
 ## Receipts
 
-- 2026-06-22 [TOOL]: Initial repository inspection found `README.md` and `AGENTS.md`; no existing Rust workspace.
 - 2026-06-22 [TOOL]: `cargo fmt` completed successfully.
 - 2026-06-22 [TOOL]: `cargo clippy --workspace --all-targets -- -D warnings` completed successfully.
 - 2026-06-22 [TOOL]: `cargo test --workspace` completed successfully; 1 core smoke test passed.
@@ -88,3 +88,4 @@
 - 2026-06-27 [TOOL]: Invariant hardening passed `cargo fmt`, clippy with warnings denied, all 114 workspace tests, benchmark compilation, and `git diff --check`.
 - 2026-06-27 [TOOL]: Boundary cleanup passed `cargo fmt`, clippy with warnings denied, all 120 workspace tests, benchmark compilation, and `git diff --check`.
 - 2026-06-27 [TOOL]: Documentation cleanup passed format check, clippy with warnings denied, all 120 workspace tests, benchmark compilation, and `git diff --check`.
+- 2026-06-27 [TOOL]: Golden V1 fixtures passed `cargo fmt`, clippy with warnings denied, all 127 workspace tests, benchmark compilation, and `git diff --check`.

@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "event": {
+    "type": "cancel_rejected",
+    "order_id": 5,
+    "participant_id": 3,
+    "reason": "participant_mismatch"
+  }
+}

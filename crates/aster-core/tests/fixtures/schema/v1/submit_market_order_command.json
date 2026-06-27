@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "command": {
+    "type": "submit_order",
+    "participant_id": 12,
+    "side": "sell",
+    "order_type": {
+      "type": "market"
+    },
+    "quantity": 30
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "event": {
+    "type": "order_accepted",
+    "order": {
+      "order_id": 1,
+      "participant_id": 10,
+      "side": "sell",
+      "order_type": {
+        "type": "limit",
+        "price": 105
+      },
+      "quantity": 40,
+      "sequence_number": 1
+    }
+  }
+}

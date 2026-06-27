@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "event": {
+    "type": "order_cancelled",
+    "order_id": 5,
+    "participant_id": 2
+  }
+}

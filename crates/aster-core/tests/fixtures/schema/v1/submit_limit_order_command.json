@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "command": {
+    "type": "submit_order",
+    "participant_id": 11,
+    "side": "buy",
+    "order_type": {
+      "type": "limit",
+      "price": 101
+    },
+    "quantity": 25
+  }
+}

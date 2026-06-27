@@ -1,0 +1,91 @@
+{
+  "schema_version": 1,
+  "snapshot": {
+    "best_bid": 100,
+    "best_ask": 102,
+    "bid_level_count": 2,
+    "ask_level_count": 2,
+    "total_resting_quantity": 150,
+    "bid_levels": [
+      {
+        "price": 100,
+        "orders": [
+          {
+            "order_id": 1,
+            "participant_id": 10,
+            "side": "buy",
+            "order_type": {
+              "type": "limit",
+              "price": 100
+            },
+            "quantity": 40,
+            "sequence_number": 1
+          },
+          {
+            "order_id": 2,
+            "participant_id": 11,
+            "side": "buy",
+            "order_type": {
+              "type": "limit",
+              "price": 100
+            },
+            "quantity": 20,
+            "sequence_number": 2
+          }
+        ]
+      },
+      {
+        "price": 99,
+        "orders": [
+          {
+            "order_id": 3,
+            "participant_id": 12,
+            "side": "buy",
+            "order_type": {
+              "type": "limit",
+              "price": 99
+            },
+            "quantity": 30,
+            "sequence_number": 3
+          }
+        ]
+      }
+    ],
+    "ask_levels": [
+      {
+        "price": 102,
+        "orders": [
+          {
+            "order_id": 4,
+            "participant_id": 20,
+            "side": "sell",
+            "order_type": {
+              "type": "limit",
+              "price": 102
+            },
+            "quantity": 25,
+            "sequence_number": 4
+          }
+        ]
+      },
+      {
+        "price": 103,
+        "orders": [
+          {
+            "order_id": 5,
+            "participant_id": 21,
+            "side": "sell",
+            "order_type": {
+              "type": "limit",
+              "price": 103
+            },
+            "quantity": 35,
+            "sequence_number": 5
+          }
+        ]
+      }
+    ],
+    "next_order_id": 6,
+    "next_sequence_number": 6
+  }
+}

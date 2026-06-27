@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "event": {
+    "type": "order_rejected",
+    "reason": "order_id_exhausted"
+  }
+}
