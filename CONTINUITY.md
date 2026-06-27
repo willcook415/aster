@@ -3,7 +3,7 @@
 ## Snapshot
 
 - 2026-06-22 [USER]: Goal is Aster, a Rust central limit order book / exchange matching engine project.
-- 2026-06-27 [USER]: Current task strengthens deterministic replay snapshots with complete visible book and allocator state; no persistence or matching-rule changes.
+- 2026-06-27 [USER]: Current task adds deterministic mixed-session invariant, replay, event-log, cancellation, and quantity-accounting tests; no feature or matching changes.
 - 2026-06-22 [USER]: First credible MVP should prioritize deterministic matching, event logs, replayability, tests, benchmarks, and docs.
 - 2026-06-22 [CODE]: Workspace scaffold contains root Cargo workspace, `aster-core`, `aster-cli`, docs skeletons, README, `.gitignore`, and this ledger.
 - 2026-06-22 [CODE]: `aster-core` includes typed integer primitives, order request/accepted order models, small domain errors, and validation helpers.
@@ -18,6 +18,7 @@
 - 2026-06-22 [CODE]: `docs/persistence.md` documents the future boundary: command log as canonical replay input, event log as audit output, snapshot as deterministic state summary.
 - 2026-06-22 [CODE]: `aster-core::schema` defines version 1 DTO records for commands, events, and snapshots with conversions to/from internal engine types.
 - 2026-06-27 [CODE]: `EngineSnapshot` includes ordered bid/ask levels, FIFO resting orders, complete accepted-order fields, and next allocation values.
+- 2026-06-27 [CODE]: Mixed-session invariant tests validate uncrossed books, ordered non-empty levels, FIFO, resting-order integrity, unique IDs, cancellation, replay, event logs, and explicit quantity accounting.
 - 2026-06-22 [ASSUMPTION]: Initial workspace uses Rust 2021 edition and no third-party dependencies.
 
 ## Decisions
@@ -36,7 +37,7 @@
 - 2026-06-22 [CODE]: Added in-memory replay, `EngineSnapshot`, and append-only in-memory event log; no persistence, serialization, command journaling, or event-log replay.
 - 2026-06-22 [CODE]: Added Criterion benchmark target for in-memory matching and replay workloads; no runtime benchmark dependency.
 - 2026-06-22 [CODE]: Replaced placeholder CLI with deterministic demo output and documented `cargo run -p aster-cli`.
-- 2026-06-22 [CODE]: Added persistence design documentation without implementing serialization or file IO.
+- 2026-06-27 [CODE]: Added deterministic full-snapshot invariant and accounting coverage for complex command sequences.
 - 2026-06-27 [CODE]: Strengthened engine/schema snapshots and replay tests to compare complete deterministic visible state; no file IO or matching changes.
 
 ## Working set
@@ -46,6 +47,7 @@
 - 2026-06-22 [CODE]: `crates/aster-core/src/schema.rs`
 - 2026-06-22 [CODE]: `crates/aster-core/src/schema/`
 - 2026-06-22 [CODE]: `crates/aster-core/tests/schema_tests.rs`
+- 2026-06-27 [CODE]: `crates/aster-core/tests/invariant_tests.rs`
 - 2026-06-22 [CODE]: `crates/aster-core/benches/engine_benchmarks.rs`
 - 2026-06-22 [CODE]: `crates/aster-cli/src/main.rs`
 - 2026-06-22 [CODE]: `README.md`
@@ -55,7 +57,7 @@
 
 ## Next
 
-- 2026-06-27 [USER]: Full-state replay verification milestone completed; next development direction is UNCONFIRMED.
+- 2026-06-27 [USER]: Deterministic invariant-hardening milestone completed; next development direction is UNCONFIRMED.
 
 ## Open questions
 
@@ -82,3 +84,4 @@
 - 2026-06-22 [TOOL]: After persistence-design doc milestone, `cargo fmt`, `cargo clippy --workspace --all-targets -- -D warnings`, and `cargo test --workspace` completed successfully; no benchmark code changed.
 - 2026-06-22 [TOOL]: After schema DTO milestone, `cargo fmt`, `cargo clippy --workspace --all-targets -- -D warnings`, `cargo test --workspace`, and `cargo bench -p aster-core --no-run` completed successfully; 14 schema integration tests added.
 - 2026-06-27 [TOOL]: Full-state snapshots passed `cargo fmt`, clippy with warnings denied, 110 workspace tests, and benchmark compilation.
+- 2026-06-27 [TOOL]: Invariant hardening passed `cargo fmt`, clippy with warnings denied, all 114 workspace tests, benchmark compilation, and `git diff --check`.
