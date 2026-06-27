@@ -1,236 +1,120 @@
-use aster_core::{
-    AcceptedOrder, AsterEngine, AsterError, EngineCommand, EngineEvent, EngineSnapshot, OrderId,
-    OrderRequest, OrderType, ParticipantId, PriceTicks, Quantity, Side,
-};
+mod report;
+mod scenario;
 
-const PASSIVE_SELLER: ParticipantId = ParticipantId::new(1);
-const PASSIVE_BUYER: ParticipantId = ParticipantId::new(2);
-const AGGRESSIVE_TRADER: ParticipantId = ParticipantId::new(3);
-const CANCELLER: ParticipantId = ParticipantId::new(4);
+use std::env;
+use std::process::ExitCode;
 
-fn main() -> Result<(), AsterError> {
-    println!("Aster - deterministic Rust matching engine demo");
-    println!();
-    println!("Participants:");
-    println!("  1: passive seller");
-    println!("  2: passive buyer");
-    println!("  3: aggressive trader");
-    println!("  4: canceller");
-    println!();
+use aster_core::SessionRecord;
 
-    let mut engine = AsterEngine::new();
+use report::render_scenario;
+use scenario::{find_scenario, scenarios};
 
-    println!("1. Resting passive liquidity");
-    submit_and_print(
-        &mut engine,
-        "passive seller: sell 100 @ 101",
-        limit_order(PASSIVE_SELLER, Side::Sell, 101, 100)?,
-    );
-    let second_ask = submit_and_print(
-        &mut engine,
-        "passive seller: sell 150 @ 102",
-        limit_order(PASSIVE_SELLER, Side::Sell, 102, 150)?,
-    );
-    submit_and_print(
-        &mut engine,
-        "passive buyer: buy 80 @ 99",
-        limit_order(PASSIVE_BUYER, Side::Buy, 99, 80)?,
-    );
-    let cancellable_bid = submit_and_print(
-        &mut engine,
-        "canceller: buy 120 @ 98",
-        limit_order(CANCELLER, Side::Buy, 98, 120)?,
-    );
+const DEFAULT_SCENARIO: &str = "mixed-session";
 
-    let cancelled_order_id = accepted_order_id(&cancellable_bid)?;
-    let rejected_cancel_order_id = accepted_order_id(&second_ask)?;
-    println!();
-
-    println!("2. Crossing limit order");
-    submit_and_print(
-        &mut engine,
-        "aggressive trader: buy 180 @ 102",
-        limit_order(AGGRESSIVE_TRADER, Side::Buy, 102, 180)?,
-    );
-    println!();
-
-    println!("3. Market sweep");
-    submit_and_print(
-        &mut engine,
-        "aggressive trader: market sell 90",
-        market_order(AGGRESSIVE_TRADER, Side::Sell, 90)?,
-    );
-    println!();
-
-    println!("4. Cancellation");
-    submit_and_print(
-        &mut engine,
-        "canceller: cancel remaining resting bid",
-        EngineCommand::cancel_order(cancelled_order_id, CANCELLER),
-    );
-    println!();
-
-    println!("5. Rejected cancellation");
-    submit_and_print(
-        &mut engine,
-        "canceller: cancel another participant's order",
-        EngineCommand::cancel_order(rejected_cancel_order_id, CANCELLER),
-    );
-    println!();
-
-    println!("6. Final snapshot");
-    print_snapshot(&engine.snapshot());
-    println!();
-
-    println!("7. Event log summary");
-    println!("  total events retained: {}", engine.event_log().len());
-    println!();
-
-    println!("Next steps:");
-    println!("  cargo test --workspace");
-    println!("  cargo clippy --workspace --all-targets -- -D warnings");
-    println!("  cargo bench -p aster-core");
-
-    Ok(())
-}
-
-fn submit_and_print(
-    engine: &mut AsterEngine,
-    label: &str,
-    command: EngineCommand,
-) -> Vec<EngineEvent> {
-    println!("  Command: {label}");
-    let events = engine.process_command(command);
-    print_events(&events);
-    events
-}
-
-fn print_events(events: &[EngineEvent]) {
-    for event in events {
-        match event {
-            EngineEvent::OrderAccepted { order } => print_accepted(order),
-            EngineEvent::OrderRejected { reason } => {
-                println!("    OrderRejected: {reason}");
-            }
-            EngineEvent::OrderCancelled {
-                order_id,
-                participant_id,
-            } => {
-                println!(
-                    "    OrderCancelled: order_id={}, participant_id={}",
-                    order_id.as_u64(),
-                    participant_id.as_u64()
-                );
-            }
-            EngineEvent::CancelRejected {
-                order_id,
-                participant_id,
-                reason,
-            } => {
-                println!(
-                    "    CancelRejected: order_id={}, participant_id={}, reason={}",
-                    order_id.as_u64(),
-                    participant_id.as_u64(),
-                    reason
-                );
-            }
-            EngineEvent::TradeExecuted {
-                resting_order_id,
-                incoming_order_id,
-                price,
-                quantity,
-            } => {
-                println!(
-                    "    TradeExecuted: resting_order_id={}, incoming_order_id={}, price={}, quantity={}",
-                    resting_order_id.as_u64(),
-                    incoming_order_id.as_u64(),
-                    price.as_u64(),
-                    quantity.as_u64()
-                );
-            }
+fn main() -> ExitCode {
+    match execute(env::args().skip(1)) {
+        Ok(output) => {
+            print!("{output}");
+            ExitCode::SUCCESS
+        }
+        Err(error) => {
+            eprintln!("error: {error}\n");
+            eprint!("{}", usage());
+            ExitCode::from(2)
         }
     }
 }
 
-fn print_accepted(order: &AcceptedOrder) {
-    println!(
-        "    OrderAccepted: order_id={}, participant_id={}, side={}, type={}, quantity={}, sequence={}",
-        order.order_id.as_u64(),
-        order.participant_id.as_u64(),
-        side_name(order.side),
-        order_type_name(order.order_type),
-        order.quantity.as_u64(),
-        order.sequence_number.as_u64()
-    );
-}
+fn execute<I, S>(args: I) -> Result<String, String>
+where
+    I: IntoIterator<Item = S>,
+    S: Into<String>,
+{
+    let args: Vec<String> = args.into_iter().map(Into::into).collect();
 
-fn print_snapshot(snapshot: &EngineSnapshot) {
-    println!("  best_bid: {}", price_or_empty(snapshot.best_bid));
-    println!("  best_ask: {}", price_or_empty(snapshot.best_ask));
-    println!("  bid_level_count: {}", snapshot.bid_level_count);
-    println!("  ask_level_count: {}", snapshot.ask_level_count);
-    println!(
-        "  total_resting_quantity: {}",
-        snapshot.total_resting_quantity
-    );
-}
-
-fn limit_order(
-    participant_id: ParticipantId,
-    side: Side,
-    price: u64,
-    quantity: u64,
-) -> Result<EngineCommand, AsterError> {
-    Ok(EngineCommand::submit_order(OrderRequest::new(
-        participant_id,
-        side,
-        OrderType::Limit {
-            price: PriceTicks::new(price)?,
-        },
-        Quantity::new(quantity)?,
-    )))
-}
-
-fn market_order(
-    participant_id: ParticipantId,
-    side: Side,
-    quantity: u64,
-) -> Result<EngineCommand, AsterError> {
-    Ok(EngineCommand::submit_order(OrderRequest::new(
-        participant_id,
-        side,
-        OrderType::Market,
-        Quantity::new(quantity)?,
-    )))
-}
-
-fn accepted_order_id(events: &[EngineEvent]) -> Result<OrderId, AsterError> {
-    events
-        .iter()
-        .find_map(|event| match event {
-            EngineEvent::OrderAccepted { order } => Some(order.order_id),
-            _ => None,
-        })
-        .ok_or(AsterError::InvalidOrderState)
-}
-
-fn side_name(side: Side) -> &'static str {
-    match side {
-        Side::Buy => "buy",
-        Side::Sell => "sell",
+    match args.as_slice() {
+        [] => run_scenario(DEFAULT_SCENARIO),
+        [command] if command == "list" || command == "list-scenarios" => Ok(render_scenario_list()),
+        [command] if command == "help" || command == "--help" || command == "-h" => Ok(usage()),
+        [command, name] if command == "scenario" => run_scenario(name),
+        [command, ..] if command == "scenario" => {
+            Err("usage: aster-cli scenario <scenario-name>".to_string())
+        }
+        [unknown, ..] => Err(format!("unknown command '{unknown}'")),
     }
 }
 
-fn order_type_name(order_type: OrderType) -> String {
-    match order_type {
-        OrderType::Limit { price } => format!("limit @ {}", price.as_u64()),
-        OrderType::Market => "market".to_string(),
-    }
+fn run_scenario(name: &str) -> Result<String, String> {
+    let scenario = find_scenario(name).ok_or_else(|| format!("unknown scenario '{name}'"))?;
+    let session = SessionRecord::from_commands(scenario.commands.clone());
+    let verification = session.verify();
+
+    Ok(render_scenario(&scenario, &session, &verification))
 }
 
-fn price_or_empty(price: Option<PriceTicks>) -> String {
-    match price {
-        Some(price) => price.as_u64().to_string(),
-        None => "none".to_string(),
+fn render_scenario_list() -> String {
+    let mut output = String::from("Aster built-in deterministic scenarios\n\n");
+    for scenario in scenarios() {
+        output.push_str(&format!(
+            "  {:<20} {}\n",
+            scenario.name, scenario.description
+        ));
+    }
+    output.push_str("\nRun: cargo run -p aster-cli -- scenario <name>\n");
+    output
+}
+
+fn usage() -> String {
+    format!(
+        "Aster deterministic scenario runner\n\n\
+         Usage:\n\
+           aster-cli                         Run the default '{DEFAULT_SCENARIO}' scenario\n\
+           aster-cli list                    List built-in scenarios\n\
+           aster-cli scenario <name>         Run a named scenario\n\
+           aster-cli help                    Show this help\n"
+    )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{execute, DEFAULT_SCENARIO};
+
+    #[test]
+    fn no_args_runs_stable_default_scenario() {
+        let output = execute(Vec::<String>::new()).expect("default scenario should run");
+
+        assert!(output.contains(&format!("Scenario: {DEFAULT_SCENARIO}")));
+        assert!(output.contains("Session verified: YES"));
+    }
+
+    #[test]
+    fn list_contains_all_expected_scenarios() {
+        let output = execute(["list"]).expect("scenario list should render");
+
+        for name in [
+            "fifo-partial-fill",
+            "market-sweep",
+            "cancellation",
+            "mixed-session",
+        ] {
+            assert!(output.contains(name), "missing scenario {name}");
+        }
+    }
+
+    #[test]
+    fn unknown_scenario_returns_clear_error() {
+        assert_eq!(
+            execute(["scenario", "does-not-exist"]),
+            Err("unknown scenario 'does-not-exist'".to_string())
+        );
+    }
+
+    #[test]
+    fn scenario_output_contains_report_sections() {
+        let output = execute(["scenario", "fifo-partial-fill"]).expect("known scenario should run");
+
+        for section in ["Commands", "Events", "Final Book", "Verification"] {
+            assert!(output.contains(section), "missing section {section}");
+        }
     }
 }

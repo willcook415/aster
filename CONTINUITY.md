@@ -3,7 +3,7 @@
 ## Snapshot
 
 - 2026-06-22 [USER]: Goal is Aster, a Rust central limit order book / exchange matching engine project.
-- 2026-06-27 [USER]: Current task adds an in-memory session record and deterministic event/full-snapshot replay verification without file persistence.
+- 2026-06-27 [USER]: Current task turns `aster-cli` into a dependency-free deterministic built-in scenario runner with replay verification reports.
 - 2026-06-22 [USER]: First credible MVP should prioritize deterministic matching, event logs, replayability, tests, benchmarks, and docs.
 - 2026-06-22 [CODE]: Workspace scaffold contains root Cargo workspace, `aster-core`, `aster-cli`, docs skeletons, README, `.gitignore`, and this ledger.
 - 2026-06-22 [CODE]: `aster-core` includes typed integer primitives, order request/accepted order models, small domain errors, and validation helpers.
@@ -22,6 +22,7 @@
 - 2026-06-27 [CODE]: Allocation exhaustion and resting-quantity overflow fail explicitly without wrapping; obsolete unimplemented-feature errors were removed.
 - 2026-06-27 [CODE]: Nine golden V1 fixtures lock command, event, and full-snapshot JSON shapes using compile-time test assets.
 - 2026-06-27 [CODE]: `SessionRecord` captures ordered commands, emitted events, and the final full snapshot; verification distinguishes event and snapshot mismatches.
+- 2026-06-27 [CODE]: `aster-cli` provides four named scenarios with ordered command/event reports, full book output, and session verification status.
 - 2026-06-22 [ASSUMPTION]: Initial workspace uses Rust 2021 edition and no third-party dependencies.
 
 ## Decisions
@@ -38,7 +39,7 @@
 - 2026-06-27 [CODE]: Clarified malformed-input errors versus engine rejection events and documented the low-level accepted-order construction boundary.
 - 2026-06-22 [CODE]: Implemented `AsterEngine` with deterministic limit matching, market execution, cancellation, partial/full fills, and resting limit remainders.
 - 2026-06-27 [CODE]: Added in-memory session construction and fresh-engine replay verification tests; no session DTO, file I/O, or JSONL.
-- 2026-06-22 [CODE]: Added Criterion benchmark target for in-memory matching and replay workloads; no runtime benchmark dependency.
+- 2026-06-27 [CODE]: Added tested CLI listing, lookup, default scenario, formatted output, and clear unknown-scenario errors without new dependencies.
 - 2026-06-27 [CODE]: Added golden fixture deserialization, DTO serialization-shape, domain-conversion, missing-field, malformed-value, and version tests.
 - 2026-06-27 [CODE]: Added deterministic full-snapshot invariant and accounting coverage for complex command sequences.
 - 2026-06-27 [CODE]: Strengthened engine/schema snapshots and replay tests to compare complete deterministic visible state; no file IO or matching changes.
@@ -52,7 +53,7 @@
 - 2026-06-22 [CODE]: `crates/aster-core/tests/schema_tests.rs`
 - 2026-06-27 [CODE]: `crates/aster-core/tests/invariant_tests.rs`
 - 2026-06-27 [CODE]: `crates/aster-core/src/session.rs`
-- 2026-06-22 [CODE]: `crates/aster-cli/src/main.rs`
+- 2026-06-27 [CODE]: `crates/aster-cli/src/`
 - 2026-06-22 [CODE]: `README.md`
 - 2026-06-22 [CODE]: `docs/architecture.md`
 - 2026-06-22 [CODE]: `docs/persistence.md`
@@ -60,7 +61,7 @@
 
 ## Next
 
-- 2026-06-27 [USER]: In-memory session-record verification milestone completed; next development direction is UNCONFIRMED.
+- 2026-06-27 [USER]: Deterministic CLI scenario-runner milestone completed; next development direction is UNCONFIRMED.
 
 ## Open questions
 
@@ -69,7 +70,6 @@
 
 ## Receipts
 
-- 2026-06-22 [TOOL]: `cargo fmt` completed successfully.
 - 2026-06-22 [TOOL]: `cargo test --workspace` completed successfully; 1 core smoke test passed.
 - 2026-06-22 [TOOL]: After domain primitives milestone, `cargo fmt`, `cargo clippy --workspace --all-targets -- -D warnings`, and `cargo test --workspace` completed successfully; 9 core tests passed.
 - 2026-06-22 [TOOL]: After command/event skeleton milestone, `cargo fmt`, `cargo clippy --workspace --all-targets -- -D warnings`, and `cargo test --workspace` completed successfully; 16 core tests passed.
@@ -90,3 +90,4 @@
 - 2026-06-27 [TOOL]: Documentation cleanup passed format check, clippy with warnings denied, all 120 workspace tests, benchmark compilation, and `git diff --check`.
 - 2026-06-27 [TOOL]: Golden V1 fixtures passed `cargo fmt`, clippy with warnings denied, all 127 workspace tests, benchmark compilation, and `git diff --check`.
 - 2026-06-27 [TOOL]: In-memory sessions passed `cargo fmt`, clippy with warnings denied, all 134 workspace tests, benchmark compilation, and `git diff --check`.
+- 2026-06-27 [TOOL]: CLI scenario runner passed `cargo fmt`, strict clippy, all 141 workspace tests, benchmark compilation, all four scenario runs, listing, and `git diff --check`.

@@ -61,13 +61,32 @@ cargo clippy --workspace --all-targets -- -D warnings
 cargo test --workspace
 ```
 
-## Running The Demo
+## Running The Scenario Runner
 
 ```bash
 cargo run -p aster-cli
 ```
 
-This runs a deterministic in-memory demo session that submits passive liquidity, executes crossing and market orders, cancels a resting order, shows a rejected cancellation, and prints the final engine snapshot plus a short event-log summary.
+With no arguments, the CLI runs the deterministic `mixed-session` scenario.
+List all built-in scenarios with:
+
+```bash
+cargo run -p aster-cli -- list
+```
+
+Run a named scenario with:
+
+```bash
+cargo run -p aster-cli -- scenario fifo-partial-fill
+cargo run -p aster-cli -- scenario market-sweep
+cargo run -p aster-cli -- scenario cancellation
+cargo run -p aster-cli -- scenario mixed-session
+```
+
+Each report shows commands in input order, events in emission order, bid and ask
+levels in matching order, resting-order details, allocator state, and replay
+verification for both events and the final full snapshot. These are built-in
+in-memory demonstrations; the CLI does not read or write session files.
 
 ## Running Benchmarks
 

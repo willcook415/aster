@@ -6,7 +6,7 @@ Correctness and determinism should be proven before performance work.
 
 ## Current Coverage
 
-The workspace currently has 134 passing tests. Coverage is divided across:
+The workspace currently has 141 passing tests. Coverage is divided across:
 
 - Unit tests for typed constructors, commands, events, allocation exhaustion,
   and primitive validation.
@@ -27,6 +27,8 @@ The workspace currently has 134 passing tests. Coverage is divided across:
 - In-memory session tests covering ordered construction, exact event capture,
   full snapshots, fresh-state verification, explicit mismatch reporting, empty
   sessions, and mixed command sequences.
+- CLI unit tests covering the built-in scenario catalog, verification of every
+  scenario, default behavior, unknown names, and report section rendering.
 - Mixed-session invariant tests covering uncrossed books, deterministic level
   order, FIFO identity, unique resting IDs, cancellation invariants, full replay
   equality, and explicit quantity accounting.
