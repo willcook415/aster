@@ -62,6 +62,8 @@ replay as the source of truth.
 - Commands are in-memory Rust values.
 - Events are in-memory Rust values.
 - Replay is in-memory only.
+- `SessionRecord` assembles commands, emitted events, and a final full snapshot
+  in memory and verifies both outputs by replaying the recorded commands.
 - The engine event log is in-memory only.
 - Versioned schema DTOs exist in `aster-core::schema`.
 - The current schema version is `1`.
@@ -70,6 +72,9 @@ replay as the source of truth.
 - There are no JSONL session files.
 - There is no durable command journal or recovery workflow.
 - Schema version validation exists for DTO-to-engine conversion.
+
+The session record is an internal domain model, not a persisted session DTO. It
+does not perform file I/O and does not define a JSON or JSONL session format.
 
 ## Future State
 
@@ -118,9 +123,16 @@ Only the middle boundary exists today. The external saved-record layer is still 
 - Migrations should be explicit and testable.
 - Unknown or unsupported schema versions should fail clearly rather than falling back silently.
 
-## Replay Verification Concept
+## Replay Verification
 
-The current in-memory replay tests already exercise the schema boundary by converting command records through JSON strings before replay. A future file-backed persistence verifier should be able to:
+Current in-memory session verification replays recorded commands through a
+fresh engine and compares the exact emitted events and complete final snapshot.
+It reports event and snapshot mismatches separately.
+
+The in-memory replay tests also exercise the schema boundary by converting
+command records through JSON strings before replay. A future file-backed
+persistence verifier should perform the same logical checks after loading
+durable records:
 
 ```text
 1. Load command log

@@ -13,6 +13,7 @@ pub mod order_book;
 pub mod price_level;
 pub mod replay;
 pub mod schema;
+pub mod session;
 pub mod types;
 pub mod validation;
 
@@ -29,6 +30,7 @@ pub use schema::{
     EventDtoV1, EventRecordV1, OrderTypeDtoV1, PriceLevelSnapshotDtoV1, SideDtoV1,
     SnapshotRecordV1, ASTER_SCHEMA_VERSION,
 };
+pub use session::{SessionRecord, SessionVerificationError};
 pub use types::{OrderId, ParticipantId, PriceTicks, Quantity, SequenceNumber};
 
 /// Returns the project name for smoke tests and the placeholder CLI.

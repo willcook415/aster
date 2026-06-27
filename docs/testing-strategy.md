@@ -6,7 +6,7 @@ Correctness and determinism should be proven before performance work.
 
 ## Current Coverage
 
-The workspace currently has 127 passing tests. Coverage is divided across:
+The workspace currently has 134 passing tests. Coverage is divided across:
 
 - Unit tests for typed constructors, commands, events, allocation exhaustion,
   and primitive validation.
@@ -24,6 +24,9 @@ The workspace currently has 127 passing tests. Coverage is divided across:
   values, integer price representation, and unsupported versions.
 - Golden V1 JSON fixture tests that lock command, event, and full-snapshot field
   names, enum tags, nesting, version values, and representative conversions.
+- In-memory session tests covering ordered construction, exact event capture,
+  full snapshots, fresh-state verification, explicit mismatch reporting, empty
+  sessions, and mixed command sequences.
 - Mixed-session invariant tests covering uncrossed books, deterministic level
   order, FIFO identity, unique resting IDs, cancellation invariants, full replay
   equality, and explicit quantity accounting.
