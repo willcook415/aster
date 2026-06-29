@@ -7,10 +7,10 @@ rust-version.workspace = true
 
 [dependencies]
 serde = { version = "1", features = ["derive"] }
+serde_json = "1"
 
 [dev-dependencies]
 criterion = "0.5"
-serde_json = "1"
 
 [[bench]]
 name = "engine_benchmarks"

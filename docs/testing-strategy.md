@@ -6,7 +6,7 @@ Correctness and determinism should be proven before performance work.
 
 ## Current Coverage
 
-The workspace currently has 158 passing tests. Coverage is divided across:
+The workspace currently has 170 passing tests. Coverage is divided across:
 
 - Unit tests for typed constructors, commands, events, allocation exhaustion,
   and primitive validation.
@@ -25,6 +25,9 @@ The workspace currently has 158 passing tests. Coverage is divided across:
 - Snapshot-boundary tests rejecting inconsistent counts and quantities,
   duplicate identities, side/price mismatches, invalid price/FIFO order,
   crossed books, and allocator state behind visible orders.
+- Persistence tests for exact file shape, JSONL record counts, domain
+  round trips, replay verification, line-aware malformed records, missing files,
+  and distinct saved-event/snapshot mismatches.
 - Golden V1 JSON fixture tests that lock command, event, and full-snapshot field
   names, enum tags, nesting, version values, and representative conversions.
 - In-memory session tests covering ordered construction, exact event capture,

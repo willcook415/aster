@@ -28,6 +28,8 @@ The current in-memory core includes:
 - Deterministic command replay
 - Full deterministic snapshots of visible book and allocator state
 - Versioned schema DTOs with in-memory JSON round-trip tests
+- File-backed V1 session export/load/verification using command/event JSONL and
+  snapshot JSON
 - Unit, integration, replay, schema, and invariant-heavy tests
 - Focused Criterion benchmarks
 
@@ -83,6 +85,13 @@ cargo run -p aster-cli -- scenario cancellation
 cargo run -p aster-cli -- scenario mixed-session
 ```
 
+Export and verify a built-in scenario session with:
+
+```bash
+cargo run -p aster-cli -- export mixed-session ./sessions/mixed-session
+cargo run -p aster-cli -- verify ./sessions/mixed-session
+```
+
 Each report shows commands in input order, events in emission order, bid and ask
 levels in matching order, resting-order details, allocator state, and replay
 verification for both events and the final full snapshot. These are built-in
@@ -94,17 +103,20 @@ in-memory demonstrations; the CLI does not read or write session files.
 cargo bench -p aster-core
 ```
 
-## Persistence Direction
+## Session Persistence
 
-File persistence is not implemented yet. The planned boundary is documented in [docs/persistence.md](docs/persistence.md): command logs are canonical replay input, event logs are audit output, and snapshots are deterministic state summaries. Versioned schema DTOs now support in-memory JSON round trips.
+A completed `SessionRecord` can be saved to and loaded from a directory containing
+`commands.jsonl`, `events.jsonl`, and `snapshot.json`. Verification replays the
+canonical command log and compares saved events and the structurally validated
+snapshot. See [docs/persistence.md](docs/persistence.md).
 
 ## Current Status
 
 Aster has an in-memory matching core with limit and market orders, cancellation,
 explicit events, full snapshots, command replay, checked allocation and quantity
 boundaries, focused benchmarks, and a deterministic CLI demo. Versioned command,
-event, and snapshot DTOs can be converted to and from JSON in memory.
+event, and snapshot DTOs support deterministic V1 file-backed sessions.
 
-There is no file I/O, JSONL session format, durable command or event log,
-database, networking, or production exchange hardening. Aster should not be
-treated as production-grade financial infrastructure.
+There is no live append journal, crash-safe/atomic file replacement, database,
+networking, or production exchange hardening. Aster should not be treated as
+production-grade financial infrastructure.

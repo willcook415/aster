@@ -10,6 +10,7 @@ pub mod errors;
 pub mod event;
 pub mod order;
 pub mod order_book;
+pub mod persistence;
 pub mod price_level;
 pub mod replay;
 pub mod schema;
@@ -23,6 +24,10 @@ pub use errors::AsterError;
 pub use event::EngineEvent;
 pub use order::{AcceptedOrder, OrderRequest, OrderType, Side};
 pub use order_book::OrderBook;
+pub use persistence::{
+    load_session_record, save_session_record, verify_session_directory, PersistenceError,
+    COMMANDS_FILE_NAME, EVENTS_FILE_NAME, SNAPSHOT_FILE_NAME,
+};
 pub use price_level::PriceLevel;
 pub use replay::{replay_commands, ReplayResult};
 pub use schema::{

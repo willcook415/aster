@@ -2,7 +2,9 @@
 
 ## Purpose
 
-Aster has versioned schema DTOs for commands, events, and snapshots. It does not implement file persistence yet. This document defines the intended persistence boundaries so future work can add durable records without weakening deterministic matching.
+Aster has versioned schema DTOs and complete-file V1 persistence for finished
+sessions. This document defines the implemented boundary and the durability work
+that remains.
 
 The core principle is:
 
@@ -14,7 +16,7 @@ Snapshot = deterministic state summary and checkpoint
 
 Persistence should preserve the distinction between what participants asked the engine to do, what the engine actually did, and what the book looked like after processing.
 
-## What To Persist Later
+## Persisted Session Records
 
 ### Command Log
 
@@ -61,7 +63,7 @@ replay as the source of truth.
 
 - Commands are in-memory Rust values.
 - Events are in-memory Rust values.
-- Replay is in-memory only.
+- Replay uses the same fresh-engine path for in-memory and loaded sessions.
 - `SessionRecord` assembles commands, emitted events, and a final full snapshot
   in memory and verifies both outputs by replaying the recorded commands.
 - The engine event log is in-memory only.
@@ -71,41 +73,45 @@ replay as the source of truth.
 - Snapshot DTO conversion validates visible-book structure, summary values,
   matching/FIFO order, unique identities, uncrossed prices, and allocator
   bounds.
-- There is no file IO.
-- There are no JSONL session files.
-- There is no durable command journal or recovery workflow.
+- Completed sessions can be saved and loaded as `commands.jsonl`,
+  `events.jsonl`, and `snapshot.json`.
+- JSONL parse and schema failures identify the record kind and line number.
+- Loaded sessions can be verified by replaying commands and comparing saved
+  events and final snapshots.
+- There is no live append journal, crash-safe replacement, or recovery service.
 - Schema version validation exists for DTO-to-engine conversion.
 
-The session record is an internal domain model, not a persisted session DTO. It
-does not perform file I/O and does not define a JSON or JSONL session format.
+`SessionRecord` remains an internal domain model. The persistence layer converts
+its fields through the existing V1 command, event, and snapshot records rather
+than serializing the internal session struct directly.
 
 Snapshot validation rejects obviously inconsistent records before they become
 domain snapshots. This makes snapshots safer audit/checkpoint values, but does
 not make them authoritative recovery state. Commands remain the canonical replay
 input.
 
-## Future State
+## Future Durability Work
 
-- Durable command logs.
-- Durable event logs.
-- Optional durable snapshots.
-- Deterministic replay from saved command logs.
-- Verification that replayed events match saved event logs.
-- Verification that final replay snapshots match saved snapshots.
+- Crash-safe temporary-file and atomic-replacement policy.
+- Live append-only command journaling.
+- Recovery and checkpoint policy.
+- Integrity checks or checksums where justified.
 - Explicit schema migrations.
 
-## Possible File Shapes
+## File Shape
 
-A future file-backed session might look like this:
+An exported session has this fixed V1 shape:
 
 ```text
-sessions/
-  session-001.commands.jsonl
-  session-001.events.jsonl
-  session-001.snapshot.json
+sessions/<session-name>/
+  commands.jsonl
+  events.jsonl
+  snapshot.json
 ```
 
-JSONL is a likely fit for append-only command and event logs because each command or event can be recorded as one line. That shape would allow streaming reads, partial inspection, and straightforward append behaviour. This is a design direction, not a permanent commitment; future benchmark, tooling, and audit requirements may justify a different durable format.
+Commands and events use one V1 record per line in exact processing/emission
+order. The snapshot is one pretty-printed V1 record. Saving creates the target
+directory and deterministically overwrites these three known files.
 
 The schema DTOs are intentionally separate from internal engine structs:
 
@@ -114,10 +120,11 @@ internal engine types
         <-> conversion
 versioned schema DTOs
         <-> serde JSON
-external saved records later
+external saved records
 ```
 
-Only the middle boundary exists today. The external saved-record layer is still future work.
+The external saved-record layer operates on completed sessions. It does not
+append while matching is running.
 
 ## Schema And Versioning Principles
 
@@ -136,14 +143,11 @@ Only the middle boundary exists today. The external saved-record layer is still 
 
 ## Replay Verification
 
-Current in-memory session verification replays recorded commands through a
-fresh engine and compares the exact emitted events and complete final snapshot.
-It reports event and snapshot mismatches separately.
+Session verification replays recorded commands through a fresh engine and
+compares the exact emitted events and complete final snapshot. It reports event
+and snapshot mismatches separately for both in-memory and loaded sessions.
 
-The in-memory replay tests also exercise the schema boundary by converting
-command records through JSON strings before replay. A future file-backed
-persistence verifier should perform the same logical checks after loading
-durable records:
+The file-backed verifier performs:
 
 ```text
 1. Load command log
@@ -153,7 +157,15 @@ durable records:
 5. Compare final replay snapshot against saved snapshot
 ```
 
-This flow would make the command log the replay input, the event log the audit output, and the snapshot a deterministic state checkpoint. It is future work and is not implemented yet.
+This flow makes the command log the replay input, the event log the audit output,
+and the snapshot a deterministic state checkpoint.
+
+## Write Guarantees
+
+V1 persistence uses simple complete-file writes. It does not use temporary files,
+filesystem synchronization, atomic directory swaps, or crash recovery. A process
+or machine failure during export may leave a partial session directory; loading
+then fails explicitly rather than substituting empty data.
 
 ## What Not To Persist Yet
 

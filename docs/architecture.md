@@ -28,7 +28,8 @@ In-memory replay currently runs a command sequence through a fresh `AsterEngine`
 collects emitted events, and compares a deterministic final `EngineSnapshot`.
 The snapshot includes complete visible bid and ask state in matching order, FIFO
 resting orders within each level, and the next engine allocation values. There
-is no file persistence yet.
+is also completed-session persistence that loads commands into the same fresh
+replay path and verifies saved events and snapshots.
 
 `AsterEngine` retains an in-memory event log of emitted facts in processing
 order. The log records output events, not inbound command intentions.
@@ -43,11 +44,11 @@ state, including inconsistent summaries, side or price mismatches, duplicate
 identities, invalid level/FIFO order, crossed books, and allocator state that
 does not follow visible orders.
 
-Schema serialization is not durable persistence. There is no file I/O, JSONL
-session storage, command journal, recovery process, or schema migration system.
-Validated snapshots are deterministic summaries and possible checkpoints, not
-canonical recovery input. The planned persistence boundaries are documented in
-`docs/persistence.md`.
+The persistence module writes completed sessions as V1 command/event JSONL and
+snapshot JSON. It is not a live command journal, crash-safe storage layer,
+database, recovery service, or schema migration system. Validated snapshots are
+deterministic summaries and checkpoints, not canonical recovery input. The
+persistence boundaries are documented in `docs/persistence.md`.
 
 ## Data Model
 
