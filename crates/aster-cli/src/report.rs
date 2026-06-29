@@ -3,7 +3,7 @@ use aster_core::{
     SessionRecord, SessionVerificationError, Side,
 };
 
-use crate::scenario::Scenario;
+use crate::scenario::{Scenario, ScenarioAccounting};
 
 pub fn render_scenario(
     scenario: &Scenario,
@@ -15,7 +15,12 @@ pub fn render_scenario(
     output.push_str(&format!("Scenario: {}\n", scenario.name));
     output.push_str(&format!("Description: {}\n\n", scenario.description));
 
-    output.push_str("Commands\n");
+    output.push_str("What happened\n");
+    for note in scenario.notes {
+        output.push_str(&format!("  - {note}\n"));
+    }
+
+    output.push_str("\nCommands\n");
     for (index, command) in session.commands.iter().enumerate() {
         output.push_str(&format!(
             "  {:>2}. {}\n",
@@ -29,12 +34,71 @@ pub fn render_scenario(
         output.push_str(&format!("  {:>2}. {}\n", index + 1, format_event(event)));
     }
 
+    output.push_str("\nEvent Summary\n");
+    render_event_summary(&mut output, &session.events);
+
+    if let Some(accounting) = scenario.accounting {
+        output.push_str("\nAccounting\n");
+        render_accounting(&mut output, accounting, &session.events);
+    }
+
     output.push_str("\nFinal Book\n");
     render_snapshot(&mut output, &session.final_snapshot);
 
     output.push_str("\nVerification\n");
     render_verification(&mut output, verification);
     output
+}
+
+#[derive(Default)]
+struct EventSummary {
+    accepted: usize,
+    rejected: usize,
+    trades: usize,
+    cancelled: usize,
+    cancel_rejected: usize,
+}
+
+fn render_event_summary(output: &mut String, events: &[EngineEvent]) {
+    let mut summary = EventSummary::default();
+    for event in events {
+        match event {
+            EngineEvent::OrderAccepted { .. } => summary.accepted += 1,
+            EngineEvent::OrderRejected { .. } => summary.rejected += 1,
+            EngineEvent::TradeExecuted { .. } => summary.trades += 1,
+            EngineEvent::OrderCancelled { .. } => summary.cancelled += 1,
+            EngineEvent::CancelRejected { .. } => summary.cancel_rejected += 1,
+        }
+    }
+
+    output.push_str(&format!("  accepted: {}\n", summary.accepted));
+    output.push_str(&format!("  rejected: {}\n", summary.rejected));
+    output.push_str(&format!("  trades: {}\n", summary.trades));
+    output.push_str(&format!("  cancelled: {}\n", summary.cancelled));
+    output.push_str(&format!("  cancel rejected: {}\n", summary.cancel_rejected));
+}
+
+fn render_accounting(output: &mut String, accounting: ScenarioAccounting, events: &[EngineEvent]) {
+    match accounting {
+        ScenarioAccounting::MarketOrder { accepted_quantity } => {
+            let traded_quantity: u64 = events
+                .iter()
+                .filter_map(|event| match event {
+                    EngineEvent::TradeExecuted { quantity, .. } => Some(quantity.as_u64()),
+                    _ => None,
+                })
+                .sum();
+            let expired = accepted_quantity
+                .checked_sub(traded_quantity)
+                .expect("built-in market accounting must not trade more than accepted quantity");
+
+            output.push_str(&format!(
+                "  accepted market quantity: {accepted_quantity}\n"
+            ));
+            output.push_str(&format!("  traded quantity: {traded_quantity}\n"));
+            output.push_str(&format!("  expired market remainder: {expired}\n"));
+        }
+    }
 }
 
 fn format_command(command: &EngineCommand) -> String {

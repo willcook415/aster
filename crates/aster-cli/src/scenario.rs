@@ -6,7 +6,14 @@ use aster_core::{
 pub struct Scenario {
     pub name: &'static str,
     pub description: &'static str,
+    pub notes: &'static [&'static str],
+    pub accounting: Option<ScenarioAccounting>,
     pub commands: Vec<EngineCommand>,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum ScenarioAccounting {
+    MarketOrder { accepted_quantity: u64 },
 }
 
 pub fn scenarios() -> Vec<Scenario> {
@@ -28,6 +35,10 @@ fn fifo_partial_fill() -> Scenario {
     Scenario {
         name: "fifo-partial-fill",
         description: "Same-price FIFO: oldest ask fills first, then the next ask is partial.",
+        notes: &[
+            "The oldest ask at price 100 filled completely before the next ask was partially filled.",
+        ],
+        accounting: None,
         commands: vec![
             limit(1, Side::Sell, 100, 10),
             limit(2, Side::Sell, 100, 20),
@@ -41,6 +52,13 @@ fn market_sweep() -> Scenario {
         name: "market-sweep",
         description:
             "Oversized market buy sweeps two ask levels at resting prices; remainder expires.",
+        notes: &[
+            "The market buy consumed all available asks from best to worst price.",
+            "Trades used the resting ask prices; quantity without liquidity expired and did not rest.",
+        ],
+        accounting: Some(ScenarioAccounting::MarketOrder {
+            accepted_quantity: 15,
+        }),
         commands: vec![
             limit(1, Side::Sell, 100, 5),
             limit(2, Side::Sell, 101, 7),
@@ -54,6 +72,11 @@ fn cancellation() -> Scenario {
         name: "cancellation",
         description:
             "Wrong-owner rejection, successful cancellation, repeated rejection, stable allocation.",
+        notes: &[
+            "The wrong participant was rejected without removing the resting order.",
+            "The owner then cancelled it; a repeated cancellation was rejected, and the next order received ID 2 and sequence 2.",
+        ],
+        accounting: None,
         commands: vec![
             limit(1, Side::Buy, 99, 10),
             cancel(1, 99),
@@ -69,6 +92,12 @@ fn mixed_session() -> Scenario {
         name: "mixed-session",
         description:
             "Passive liquidity, crossing limit, market trade, cancellation, and rejection.",
+        notes: &[
+            "Passive orders established both sides before a crossing limit order traded at resting ask prices.",
+            "A market sell traded against the best bid, one bid was cancelled, and a wrong-owner cancellation was rejected.",
+            "Replay verification confirms the event stream and final full snapshot.",
+        ],
+        accounting: None,
         commands: vec![
             limit(1, Side::Sell, 101, 10),
             limit(2, Side::Sell, 102, 15),

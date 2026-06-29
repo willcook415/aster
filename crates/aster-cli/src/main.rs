@@ -110,11 +110,44 @@ mod tests {
     }
 
     #[test]
-    fn scenario_output_contains_report_sections() {
-        let output = execute(["scenario", "fifo-partial-fill"]).expect("known scenario should run");
+    fn every_scenario_output_contains_report_sections() {
+        for name in [
+            "fifo-partial-fill",
+            "market-sweep",
+            "cancellation",
+            "mixed-session",
+        ] {
+            let output = execute(["scenario", name]).expect("known scenario should run");
 
-        for section in ["Commands", "Events", "Final Book", "Verification"] {
-            assert!(output.contains(section), "missing section {section}");
+            for section in [
+                "What happened",
+                "Commands",
+                "Events",
+                "Event Summary",
+                "Final Book",
+                "Verification",
+            ] {
+                assert!(output.contains(section), "{name} missing section {section}");
+            }
         }
+    }
+
+    #[test]
+    fn market_sweep_reports_expired_remainder_explicitly() {
+        let output = execute(["scenario", "market-sweep"]).expect("known scenario should run");
+
+        assert!(output.contains("Accounting"));
+        assert!(output.contains("accepted market quantity: 15"));
+        assert!(output.contains("traded quantity: 12"));
+        assert!(output.contains("expired market remainder: 3"));
+    }
+
+    #[test]
+    fn help_output_keeps_stable_usage_commands() {
+        let output = execute(["help"]).expect("help should render");
+
+        assert!(output.contains("aster-cli list"));
+        assert!(output.contains("aster-cli scenario <name>"));
+        assert!(output.contains("aster-cli help"));
     }
 }

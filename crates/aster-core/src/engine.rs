@@ -133,6 +133,9 @@ impl AsterEngine {
             SequenceNumber::new(self.next_sequence_number),
             request,
         );
+        if let Err(reason) = self.ensure_resting_capacity(order) {
+            return vec![EngineEvent::OrderRejected { reason }];
+        }
         let mut events = vec![EngineEvent::OrderAccepted { order }];
 
         match self.match_and_maybe_rest(order, &mut events) {
@@ -161,6 +164,39 @@ impl AsterEngine {
                 reason,
             }],
         }
+    }
+
+    fn ensure_resting_capacity(&self, order: AcceptedOrder) -> Result<(), AsterError> {
+        let OrderType::Limit { price } = order.order_type else {
+            return Ok(());
+        };
+        let mut remaining = order.quantity.as_u64();
+        let mut projected_total = self.order_book.total_resting_quantity();
+
+        match order.side {
+            Side::Buy => {
+                for level in self.order_book.ask_levels_in_matching_order() {
+                    if price < level.price() || remaining == 0 {
+                        break;
+                    }
+                    project_level_fill(&mut remaining, &mut projected_total, level)?;
+                }
+            }
+            Side::Sell => {
+                for level in self.order_book.bid_levels_in_matching_order() {
+                    if price > level.price() || remaining == 0 {
+                        break;
+                    }
+                    project_level_fill(&mut remaining, &mut projected_total, level)?;
+                }
+            }
+        }
+
+        projected_total
+            .checked_add(remaining)
+            .ok_or(AsterError::QuantityOverflow)?;
+
+        Ok(())
     }
 
     fn match_and_maybe_rest(
@@ -258,6 +294,22 @@ impl AsterEngine {
                 .is_some_and(|best_bid| price <= best_bid),
         }
     }
+}
+
+fn project_level_fill(
+    remaining: &mut u64,
+    projected_total: &mut u64,
+    level: &crate::PriceLevel,
+) -> Result<(), AsterError> {
+    let fill_quantity = (*remaining).min(level.total_quantity());
+    *remaining = remaining
+        .checked_sub(fill_quantity)
+        .ok_or(AsterError::InvalidOrderState)?;
+    *projected_total = projected_total
+        .checked_sub(fill_quantity)
+        .ok_or(AsterError::InvalidOrderState)?;
+
+    Ok(())
 }
 
 fn snapshot_level(level: &crate::PriceLevel) -> PriceLevelSnapshot {
