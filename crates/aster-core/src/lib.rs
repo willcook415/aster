@@ -1,8 +1,66 @@
-//! Deterministic matching engine core for Aster.
+//! Deterministic central limit order book and matching engine core for Aster.
 //!
-//! This crate contains the central limit order book domain model, validation,
-//! matching engine, command/event types, and in-memory replay scaffolding.
-//! File persistence is not implemented yet.
+//! # Core concepts
+//!
+//! [`EngineCommand`] values are input intentions. [`AsterEngine`] processes them
+//! in order, assigns deterministic [`OrderId`] and [`SequenceNumber`] values,
+//! updates passive [`OrderBook`] state, and emits [`EngineEvent`] facts.
+//! Matching uses integer [`PriceTicks`], integer [`Quantity`], ordered price
+//! levels, and FIFO priority within a level. It does not use wall-clock time or
+//! randomness.
+//!
+//! [`replay_commands`] rebuilds events and a complete [`EngineSnapshot`] through
+//! a fresh engine. [`SessionRecord`] keeps commands, events, and the final
+//! snapshot together for equality verification.
+//!
+//! # Persistence boundary
+//!
+//! [`save_session_record`] and [`load_session_record`] persist completed sessions
+//! through versioned schema records. Commands and events use JSONL; the final
+//! snapshot uses JSON. [`verify_session_directory`] treats commands as canonical
+//! replay input and saved events/snapshots as audit outputs. Persistence is kept
+//! outside the matching path.
+//!
+//! # Example
+//!
+//! ```
+//! use aster_core::{
+//!     AsterEngine, AsterError, EngineCommand, EngineEvent, OrderRequest,
+//!     OrderType, ParticipantId, PriceTicks, Quantity, Side,
+//! };
+//!
+//! # fn main() -> Result<(), AsterError> {
+//! let mut engine = AsterEngine::new();
+//! let sell = OrderRequest::new(
+//!     ParticipantId::new(1),
+//!     Side::Sell,
+//!     OrderType::Limit {
+//!         price: PriceTicks::new(101)?,
+//!     },
+//!     Quantity::new(10)?,
+//! );
+//! let buy = OrderRequest::new(
+//!     ParticipantId::new(2),
+//!     Side::Buy,
+//!     OrderType::Limit {
+//!         price: PriceTicks::new(102)?,
+//!     },
+//!     Quantity::new(4)?,
+//! );
+//!
+//! engine.process_command(EngineCommand::submit_order(sell));
+//! let events = engine.process_command(EngineCommand::submit_order(buy));
+//!
+//! assert!(matches!(events[0], EngineEvent::OrderAccepted { .. }));
+//! assert!(matches!(
+//!     events[1],
+//!     EngineEvent::TradeExecuted { price, quantity, .. }
+//!         if price.as_u64() == 101 && quantity.as_u64() == 4
+//! ));
+//! assert_eq!(engine.snapshot().total_resting_quantity, 6);
+//! # Ok(())
+//! # }
+//! ```
 
 pub mod command;
 pub mod engine;

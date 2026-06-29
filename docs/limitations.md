@@ -43,3 +43,10 @@ responsible for identity and sequence uniqueness.
 Aster has not been hardened or validated as production financial
 infrastructure. Its current value is the explicit, deterministic core and the
 ability to inspect and test its simplified rules honestly.
+
+## Related Documentation
+
+- [Architecture](architecture.md)
+- [Matching rules](matching-rules.md)
+- [Persistence](persistence.md)
+- [Testing strategy](testing-strategy.md)

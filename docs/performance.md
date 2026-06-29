@@ -47,3 +47,9 @@ Benchmark results depend on machine, OS, CPU power state, Rust version, and buil
 - Criterion summary
 
 Do not describe Aster as production-grade financial infrastructure based on these benchmarks.
+
+## Related Documentation
+
+- [Architecture](architecture.md)
+- [Testing strategy](testing-strategy.md)
+- [Limitations](limitations.md)

@@ -1,6 +1,7 @@
 [package]
 name = "aster-core"
 version = "0.1.0"
+description = "Deterministic central limit order book and matching engine core"
 edition.workspace = true
 license.workspace = true
 rust-version.workspace = true

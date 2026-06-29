@@ -181,3 +181,10 @@ Aster should not persist these at this stage:
 - UI state
 
 Those concerns belong to later exchange-layer, risk, integration, or product milestones after the core matching engine and replay model are proven.
+
+## Related Documentation
+
+- [Architecture](architecture.md)
+- [Matching rules](matching-rules.md)
+- [Testing strategy](testing-strategy.md)
+- [Limitations](limitations.md)

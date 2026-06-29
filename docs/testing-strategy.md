@@ -6,7 +6,8 @@ Correctness and determinism should be proven before performance work.
 
 ## Current Coverage
 
-The workspace currently has 170 passing tests. Coverage is divided across:
+The workspace currently has 170 passing unit/integration tests plus one
+compile-checked crate documentation example. Coverage is divided across:
 
 - Unit tests for typed constructors, commands, events, allocation exhaustion,
   and primitive validation.
@@ -71,3 +72,10 @@ Benchmark compilation is also checked with:
 ```bash
 cargo bench -p aster-core --no-run
 ```
+
+## Related Documentation
+
+- [Architecture](architecture.md)
+- [Matching rules](matching-rules.md)
+- [Performance](performance.md)
+- [Limitations](limitations.md)

@@ -4,7 +4,8 @@
 
 Aster supports in-memory limit-order matching, market-order matching, partial
 and full fills, and cancellation of resting orders. In-memory replay and schema
-DTO serialization exist. Durable persistence does not.
+DTO serialization exist. Completed sessions can be persisted and verified, but
+file I/O remains outside the matching path.
 
 Non-crossing limit orders rest on the appropriate side of the book. Crossing limit orders are accepted, matched, and any unfilled remainder rests.
 
@@ -74,3 +75,10 @@ Cancellation failures emit `CancelRejected`. Missing orders use
 
 Impossible book or matching states use explicit internal `AsterError` values;
 they are not silently ignored.
+
+## Related Documentation
+
+- [Architecture](architecture.md)
+- [Testing strategy](testing-strategy.md)
+- [Persistence](persistence.md)
+- [Limitations](limitations.md)

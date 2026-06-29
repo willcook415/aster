@@ -1,7 +1,8 @@
 //! In-memory deterministic session records and replay verification.
 //!
 //! A session records input commands, emitted events, and the complete final
-//! snapshot. It does not define a persisted schema or perform file I/O.
+//! snapshot. The type does not serialize itself or perform file I/O; the
+//! `persistence` module converts its fields through versioned schema records.
 
 use std::error::Error;
 use std::fmt;

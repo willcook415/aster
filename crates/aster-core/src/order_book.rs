@@ -3,8 +3,8 @@
 //! `OrderBook` currently stores already-accepted resting limit orders for a
 //! single instrument. Best-price selection across levels is handled here, while
 //! FIFO within each price level is delegated to `PriceLevel`. Matching and
-//! cancellation are coordinated by the engine, while persistence remains a
-//! future boundary.
+//! cancellation are coordinated by the engine. Completed-session persistence is
+//! isolated in the `persistence` module.
 
 use std::collections::{BTreeMap, HashMap};
 

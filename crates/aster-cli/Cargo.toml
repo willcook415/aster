@@ -1,6 +1,7 @@
 [package]
 name = "aster-cli"
 version = "0.1.0"
+description = "Deterministic scenario and persisted-session CLI for Aster"
 edition.workspace = true
 license.workspace = true
 rust-version.workspace = true

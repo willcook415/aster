@@ -3,9 +3,8 @@
 ## Snapshot
 
 - 2026-06-22 [USER]: Goal is Aster, a Rust central limit order book / exchange matching engine project.
-- 2026-06-29 [USER]: Current task adds complete-file V1 session persistence and replay verification.
+- 2026-06-29 [USER]: Current task improves repository portfolio readiness, documentation navigation, and crate entry docs without runtime changes.
 - 2026-06-22 [USER]: First credible MVP should prioritize deterministic matching, event logs, replayability, tests, benchmarks, and docs.
-- 2026-06-22 [CODE]: Workspace scaffold contains root Cargo workspace, `aster-core`, `aster-cli`, docs skeletons, README, `.gitignore`, and this ledger.
 - 2026-06-22 [CODE]: `aster-core` includes typed integer primitives, order request/accepted order models, small domain errors, and validation helpers.
 - 2026-06-22 [CODE]: `aster-core` includes `EngineCommand` and `EngineEvent` skeletons separating input intentions from emitted facts.
 - 2026-06-22 [CODE]: `aster-core` includes `PriceLevel`, a FIFO queue for valid resting limit orders at one price.
@@ -24,6 +23,7 @@
 - 2026-06-29 [CODE]: A test-only `Vec`-based reference model independently checks exact events and full snapshots across 11 deterministic sequences and 100 commands.
 - 2026-06-29 [CODE]: V1 snapshot conversion rejects structurally inconsistent summaries, levels, orders, identities, prices, FIFO order, crossed books, and allocator bounds.
 - 2026-06-29 [CODE]: Completed sessions save/load as V1 command/event JSONL plus snapshot JSON and verify through fresh-engine replay.
+- 2026-06-29 [CODE]: README and rustdoc now provide cold-start architecture, matching, replay, persistence, quality-gate, and limitations guidance.
 - 2026-06-22 [ASSUMPTION]: Initial workspace uses Rust 2021 edition and no third-party dependencies.
 
 ## Decisions
@@ -38,13 +38,13 @@
 
 ## Done (recent)
 
-- 2026-06-27 [CODE]: Added golden fixture deserialization, DTO serialization-shape, domain-conversion, missing-field, malformed-value, and version tests.
 - 2026-06-27 [CODE]: Added deterministic full-snapshot invariant and accounting coverage for complex command sequences.
 - 2026-06-27 [CODE]: Strengthened engine/schema snapshots and replay tests to compare complete deterministic visible state; no file IO or matching changes.
 - 2026-06-29 [CODE]: Reproduced and fixed late-overflow partial mutation; focused tests lock snapshot, event-log, allocator, liquidity, and successful matching behavior.
 - 2026-06-29 [CODE]: Added independent deterministic model comparison for matching, priority, fills, expiry, cancellation, exact events, and complete visible state; no production bug found.
 - 2026-06-29 [CODE]: Hardened snapshot DTO-to-domain conversion with focused malformed-record tests while keeping command logs canonical and snapshots non-authoritative.
 - 2026-06-29 [CODE]: Added V1 completed-session persistence, line-aware/missing-file errors, replay verification, focused tests, and CLI export/verify.
+- 2026-06-29 [CODE]: Reworked repository landing/docs navigation and crate-level documentation for portfolio evaluation; no runtime behavior changed.
 
 ## Working set
 
@@ -68,6 +68,7 @@
 - 2026-06-29 [USER]: Independent deterministic model-testing milestone completed; subsequent development direction remains UNCONFIRMED.
 - 2026-06-29 [USER]: Snapshot/schema boundary hardening completed; durable JSONL persistence remains UNCONFIRMED.
 - 2026-06-29 [USER]: Completed-session JSONL persistence milestone implemented; live journaling and crash-safe durability remain future work.
+- 2026-06-29 [USER]: Portfolio-readiness documentation pass completed; next technical milestone remains UNCONFIRMED.
 
 ## Open questions
 
@@ -76,7 +77,6 @@
 
 ## Receipts
 
-- 2026-06-22 [TOOL]: After `AsterEngine` acceptance milestone, `cargo fmt`, `cargo clippy --workspace --all-targets -- -D warnings`, and `cargo test --workspace` completed successfully; 52 core tests passed.
 - 2026-06-22 [TOOL]: After limit-order matching milestone, `cargo fmt`, `cargo clippy --workspace --all-targets -- -D warnings`, and `cargo test --workspace` completed successfully; 59 core tests passed.
 - 2026-06-22 [TOOL]: After market order execution milestone, `cargo fmt`, `cargo clippy --workspace --all-targets -- -D warnings`, and `cargo test --workspace` completed successfully; 65 core tests passed.
 - 2026-06-22 [TOOL]: After cancellation execution milestone, `cargo fmt`, `cargo clippy --workspace --all-targets -- -D warnings`, and `cargo test --workspace` completed successfully; 76 core tests passed.
@@ -96,3 +96,4 @@
 - 2026-06-29 [TOOL]: Independent model testing passed formatting, strict clippy, all 147 workspace tests, benchmark compilation, and default/list/all four CLI scenario runs.
 - 2026-06-29 [TOOL]: Snapshot/schema hardening passed formatting, strict clippy, all 158 workspace tests, benchmark compilation, and default/list/all four CLI scenario runs.
 - 2026-06-29 [TOOL]: V1 completed-session persistence passed formatting, strict clippy, all 170 workspace tests, benchmark compilation, existing CLI smokes, and export/verify for all four scenarios.
+- 2026-06-29 [TOOL]: Portfolio-readiness pass passed formatting, strict clippy, 170 unit/integration tests plus rustdoc example, benchmark compilation, workspace docs, CLI smokes, and export/verify.

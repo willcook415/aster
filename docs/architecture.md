@@ -55,3 +55,10 @@ persistence boundaries are documented in `docs/persistence.md`.
 Aster uses typed values including `OrderId`, `ParticipantId`, `SequenceNumber`,
 `PriceTicks`, `Quantity`, `Side`, and `OrderType`. Prices and quantities are
 positive integers rather than floating-point values.
+
+## Related Documentation
+
+- [Matching rules](matching-rules.md)
+- [Testing strategy](testing-strategy.md)
+- [Persistence](persistence.md)
+- [Limitations](limitations.md)
