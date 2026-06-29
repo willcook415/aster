@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    name: Rust quality gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Install stable Rust
+        run: |
+          rustup toolchain install stable --profile minimal --component rustfmt,clippy
+          rustup default stable
+          rustc --version
+
+      - name: Cache Cargo files
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Check formatting
+        run: cargo fmt --check
+
+      - name: Run Clippy
+        run: cargo clippy --workspace --all-targets -- -D warnings
+
+      - name: Run tests
+        run: cargo test --workspace
+
+      - name: Compile benchmarks
+        run: cargo bench -p aster-core --no-run
+
+      - name: Build documentation
+        run: cargo doc --workspace --no-deps
+
+      - name: Smoke-test CLI and persisted session
+        run: |
+          cargo run -p aster-cli -- list
+          cargo run -p aster-cli -- scenario mixed-session
+          cargo run -p aster-cli -- export mixed-session ./target/aster-ci-smoke/mixed-session
+          cargo run -p aster-cli -- verify ./target/aster-ci-smoke/mixed-session

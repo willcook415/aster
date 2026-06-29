@@ -77,6 +77,14 @@ Benchmark compilation is also checked with:
 cargo bench -p aster-core --no-run
 ```
 
+## Continuous Integration
+
+`.github/workflows/ci.yml` runs on pushes and pull requests using stable Rust on
+Ubuntu. It enforces formatting, strict Clippy, the full workspace test suite,
+benchmark compilation, rustdoc generation, and a focused mixed-session CLI
+export/verify smoke workflow. Cargo registry, Git, and target directories use
+standard lockfile-keyed caching.
+
 ## Related Documentation
 
 - [Architecture](architecture.md)

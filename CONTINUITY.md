@@ -3,9 +3,8 @@
 ## Snapshot
 
 - 2026-06-22 [USER]: Goal is Aster, a Rust central limit order book / exchange matching engine project.
-- 2026-06-29 [USER]: Current task adds bounded property-based state-machine comparison against the independent matching model.
+- 2026-06-29 [USER]: Current task adds a minimal GitHub Actions quality gate for pushes and pull requests.
 - 2026-06-22 [USER]: First credible MVP should prioritize deterministic matching, event logs, replayability, tests, benchmarks, and docs.
-- 2026-06-22 [CODE]: `aster-core` includes `EngineCommand` and `EngineEvent` skeletons separating input intentions from emitted facts.
 - 2026-06-22 [CODE]: `aster-core` includes `PriceLevel`, a FIFO queue for valid resting limit orders at one price.
 - 2026-06-22 [CODE]: `aster-core` includes `OrderBook`, a passive single-instrument bid/ask storage shell using deterministic price levels.
 - 2026-06-22 [CODE]: `aster-core` includes `AsterEngine`, a deterministic command processor that assigns IDs/sequences, matches limit and market orders, emits trades, rests limit remainders, expires market remainders, and cancels resting orders.
@@ -24,6 +23,7 @@
 - 2026-06-29 [CODE]: Completed sessions save/load as V1 command/event JSONL plus snapshot JSON and verify through fresh-engine replay.
 - 2026-06-29 [CODE]: README and rustdoc now provide cold-start architecture, matching, replay, persistence, quality-gate, and limitations guidance.
 - 2026-06-29 [CODE]: Proptest runs 64 bounded generated action sequences against exact per-command engine/model events and full snapshots.
+- 2026-06-29 [CODE]: GitHub Actions runs formatting, strict clippy, tests, benchmark compilation, rustdoc, and focused CLI persistence smoke checks.
 - 2026-06-22 [ASSUMPTION]: Initial workspace uses Rust 2021 edition and no third-party dependencies.
 
 ## Decisions
@@ -39,13 +39,13 @@
 
 ## Done (recent)
 
-- 2026-06-27 [CODE]: Strengthened engine/schema snapshots and replay tests to compare complete deterministic visible state; no file IO or matching changes.
 - 2026-06-29 [CODE]: Reproduced and fixed late-overflow partial mutation; focused tests lock snapshot, event-log, allocator, liquidity, and successful matching behavior.
 - 2026-06-29 [CODE]: Added independent deterministic model comparison for matching, priority, fills, expiry, cancellation, exact events, and complete visible state; no production bug found.
 - 2026-06-29 [CODE]: Hardened snapshot DTO-to-domain conversion with focused malformed-record tests while keeping command logs canonical and snapshots non-authoritative.
 - 2026-06-29 [CODE]: Added V1 completed-session persistence, line-aware/missing-file errors, replay verification, focused tests, and CLI export/verify.
 - 2026-06-29 [CODE]: Reworked repository landing/docs navigation and crate-level documentation for portfolio evaluation; no runtime behavior changed.
 - 2026-06-29 [CODE]: Added generated matching state-machine coverage using the existing independent oracle; no production bug or runtime change found.
+- 2026-06-29 [CODE]: Added one Ubuntu/stable-Rust CI job with read-only permissions and standard lockfile-keyed Cargo caching.
 
 ## Working set
 
@@ -53,7 +53,7 @@
 - 2026-06-22 [CODE]: `crates/aster-core/tests/`
 - 2026-06-22 [CODE]: `crates/aster-core/src/schema.rs`
 - 2026-06-22 [CODE]: `crates/aster-core/src/schema/`
-- 2026-06-29 [CODE]: `crates/aster-core/tests/snapshot_validation_tests.rs`
+- 2026-06-29 [CODE]: `.github/workflows/ci.yml`
 - 2026-06-29 [CODE]: `crates/aster-core/tests/reference_model_tests.rs`
 - 2026-06-29 [CODE]: `crates/aster-core/src/persistence.rs`
 - 2026-06-27 [CODE]: `crates/aster-cli/src/`
@@ -71,6 +71,7 @@
 - 2026-06-29 [USER]: Completed-session JSONL persistence milestone implemented; live journaling and crash-safe durability remain future work.
 - 2026-06-29 [USER]: Portfolio-readiness documentation pass completed; next technical milestone remains UNCONFIRMED.
 - 2026-06-29 [USER]: Property-based matching milestone completed; persistence/schema fuzzing remains separate future work.
+- 2026-06-29 [USER]: Minimal CI quality-gate milestone completed; repository URL and status badge remain UNCONFIRMED.
 
 ## Open questions
 
@@ -79,7 +80,6 @@
 
 ## Receipts
 
-- 2026-06-22 [TOOL]: After market order execution milestone, `cargo fmt`, `cargo clippy --workspace --all-targets -- -D warnings`, and `cargo test --workspace` completed successfully; 65 core tests passed.
 - 2026-06-22 [TOOL]: After cancellation execution milestone, `cargo fmt`, `cargo clippy --workspace --all-targets -- -D warnings`, and `cargo test --workspace` completed successfully; 76 core tests passed.
 - 2026-06-22 [TOOL]: After in-memory replay milestone, `cargo fmt`, `cargo clippy --workspace --all-targets -- -D warnings`, and `cargo test --workspace` completed successfully; 83 core tests passed.
 - 2026-06-22 [TOOL]: After in-engine event log milestone, `cargo fmt`, `cargo clippy --workspace --all-targets -- -D warnings`, and `cargo test --workspace` completed successfully; 93 core tests passed.
@@ -99,3 +99,4 @@
 - 2026-06-29 [TOOL]: V1 completed-session persistence passed formatting, strict clippy, all 170 workspace tests, benchmark compilation, existing CLI smokes, and export/verify for all four scenarios.
 - 2026-06-29 [TOOL]: Portfolio-readiness pass passed formatting, strict clippy, 170 unit/integration tests plus rustdoc example, benchmark compilation, workspace docs, CLI smokes, and export/verify.
 - 2026-06-29 [TOOL]: Property-based matching passed formatting, strict clippy, 171 unit/integration tests plus rustdoc example, benchmark compilation, workspace docs, CLI smokes, and export/verify.
+- 2026-06-29 [TOOL]: Minimal CI workflow locally mirrored successfully: formatting, strict clippy, 171 tests plus rustdoc, benchmark compilation, docs, and focused CLI persistence smoke.

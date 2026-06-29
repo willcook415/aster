@@ -166,6 +166,10 @@ cargo clippy --workspace --all-targets -- -D warnings
 cargo test --workspace
 ```
 
+The [GitHub Actions workflow](.github/workflows/ci.yml) runs these checks on
+every push and pull request, along with benchmark compilation, rustdoc
+generation, and a focused CLI export/verify smoke test.
+
 The test strategy includes:
 
 - rule-focused engine and book tests;
