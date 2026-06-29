@@ -5,6 +5,8 @@ use aster_core::{
     OrderRequest, OrderType, ParticipantId, PriceLevelSnapshot, PriceTicks, Quantity,
     SequenceNumber, Side,
 };
+use proptest::prelude::*;
+use proptest::test_runner::{Config as ProptestConfig, TestCaseError, TestCaseResult};
 
 #[derive(Debug)]
 struct ReferenceModel {
@@ -180,6 +182,205 @@ fn deterministic_sequences_match_independent_reference_model() {
     for sequence in deterministic_sequences() {
         assert_sequence_matches(sequence.name, sequence.commands);
     }
+}
+
+#[derive(Clone, Debug)]
+enum GeneratedAction {
+    Limit {
+        participant_id: u64,
+        side: Side,
+        price_ticks: u64,
+        quantity: u64,
+    },
+    Market {
+        participant_id: u64,
+        side: Side,
+        quantity: u64,
+    },
+    CancelExistingOwner {
+        selector: usize,
+    },
+    CancelExistingWrongParticipant {
+        selector: usize,
+        participant_id: u64,
+    },
+    CancelMissing {
+        selector: u64,
+        participant_id: u64,
+    },
+}
+
+proptest! {
+    #![proptest_config(ProptestConfig {
+        cases: 64,
+        failure_persistence: None,
+        ..ProptestConfig::default()
+    })]
+
+    #[test]
+    fn generated_state_machine_matches_reference_model(
+        generated_tail in prop::collection::vec(generated_action(), 1..=90)
+    ) {
+        let mut actions = coverage_prefix();
+        actions.extend(generated_tail);
+        compare_generated_actions(&actions)?;
+    }
+}
+
+fn compare_generated_actions(actions: &[GeneratedAction]) -> TestCaseResult {
+    let mut engine = AsterEngine::new();
+    let mut model = ReferenceModel::new();
+
+    for (index, action) in actions.iter().enumerate() {
+        let command = resolve_action(action, &model.snapshot());
+        let engine_events = engine.process_command(command);
+        let model_events = model.process_command(command);
+        let engine_snapshot = engine.snapshot();
+        let model_snapshot = model.snapshot();
+
+        if engine_events != model_events || engine_snapshot != model_snapshot {
+            return Err(TestCaseError::fail(format!(
+                "command_index={index}\naction={action:#?}\ncommand={command:#?}\n\
+                 generated_sequence={actions:#?}\nengine_events={engine_events:#?}\n\
+                 model_events={model_events:#?}\nengine_snapshot={engine_snapshot:#?}\n\
+                 model_snapshot={model_snapshot:#?}"
+            )));
+        }
+    }
+
+    Ok(())
+}
+
+fn generated_action() -> impl Strategy<Value = GeneratedAction> {
+    let side = prop_oneof![Just(Side::Buy), Just(Side::Sell)];
+    prop_oneof![
+        5 => (1_u64..=5, side.clone(), 95_u64..=105, 1_u64..=20).prop_map(
+            |(participant_id, side, price_ticks, quantity)| GeneratedAction::Limit {
+                participant_id,
+                side,
+                price_ticks,
+                quantity,
+            }
+        ),
+        3 => (1_u64..=5, side, 1_u64..=20).prop_map(
+            |(participant_id, side, quantity)| GeneratedAction::Market {
+                participant_id,
+                side,
+                quantity,
+            }
+        ),
+        2 => any::<usize>().prop_map(
+            |selector| GeneratedAction::CancelExistingOwner { selector }
+        ),
+        2 => (any::<usize>(), 1_u64..=5).prop_map(
+            |(selector, participant_id)| GeneratedAction::CancelExistingWrongParticipant {
+                selector,
+                participant_id,
+            }
+        ),
+        1 => (0_u64..=100, 1_u64..=5).prop_map(
+            |(selector, participant_id)| GeneratedAction::CancelMissing {
+                selector,
+                participant_id,
+            }
+        ),
+    ]
+}
+
+fn coverage_prefix() -> Vec<GeneratedAction> {
+    vec![
+        generated_limit(1, Side::Buy, 99, 6),
+        generated_limit(2, Side::Buy, 98, 7),
+        generated_limit(3, Side::Sell, 102, 5),
+        generated_limit(4, Side::Sell, 103, 8),
+        GeneratedAction::Market {
+            participant_id: 5,
+            side: Side::Buy,
+            quantity: 9,
+        },
+        GeneratedAction::Market {
+            participant_id: 1,
+            side: Side::Sell,
+            quantity: 10,
+        },
+        generated_limit(2, Side::Buy, 97, 4),
+        GeneratedAction::CancelExistingWrongParticipant {
+            selector: 0,
+            participant_id: 5,
+        },
+        GeneratedAction::CancelExistingOwner { selector: 0 },
+        GeneratedAction::CancelMissing {
+            selector: 0,
+            participant_id: 1,
+        },
+    ]
+}
+
+fn generated_limit(
+    participant_id: u64,
+    side: Side,
+    price_ticks: u64,
+    quantity: u64,
+) -> GeneratedAction {
+    GeneratedAction::Limit {
+        participant_id,
+        side,
+        price_ticks,
+        quantity,
+    }
+}
+
+fn resolve_action(action: &GeneratedAction, snapshot: &EngineSnapshot) -> EngineCommand {
+    match *action {
+        GeneratedAction::Limit {
+            participant_id,
+            side,
+            price_ticks,
+            quantity,
+        } => limit(participant_id, side, price_ticks, quantity),
+        GeneratedAction::Market {
+            participant_id,
+            side,
+            quantity,
+        } => market(participant_id, side, quantity),
+        GeneratedAction::CancelExistingOwner { selector } => {
+            let resting = resting_orders(snapshot);
+            resting.get(selector % resting.len().max(1)).map_or_else(
+                || cancel(10_000, 1),
+                |order| cancel(order.order_id.as_u64(), order.participant_id.as_u64()),
+            )
+        }
+        GeneratedAction::CancelExistingWrongParticipant {
+            selector,
+            participant_id,
+        } => {
+            let resting = resting_orders(snapshot);
+            resting.get(selector % resting.len().max(1)).map_or_else(
+                || cancel(10_001, participant_id),
+                |order| {
+                    let wrong_participant = if participant_id == order.participant_id.as_u64() {
+                        participant_id + 1
+                    } else {
+                        participant_id
+                    };
+                    cancel(order.order_id.as_u64(), wrong_participant)
+                },
+            )
+        }
+        GeneratedAction::CancelMissing {
+            selector,
+            participant_id,
+        } => cancel(20_000 + selector, participant_id),
+    }
+}
+
+fn resting_orders(snapshot: &EngineSnapshot) -> Vec<AcceptedOrder> {
+    snapshot
+        .bid_levels
+        .iter()
+        .chain(&snapshot.ask_levels)
+        .flat_map(|level| level.orders.iter().copied())
+        .collect()
 }
 
 fn assert_sequence_matches(name: &str, commands: Vec<EngineCommand>) {

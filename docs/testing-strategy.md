@@ -6,7 +6,7 @@ Correctness and determinism should be proven before performance work.
 
 ## Current Coverage
 
-The workspace currently has 170 passing unit/integration tests plus one
+The workspace currently has 171 passing unit/integration tests plus one
 compile-checked crate documentation example. Coverage is divided across:
 
 - Unit tests for typed constructors, commands, events, allocation exhaustion,
@@ -42,6 +42,10 @@ compile-checked crate documentation example. Coverage is divided across:
 - An independent test-only reference model that compares exact events and full
   visible snapshots after every command across 11 deterministic sequences and
   100 commands, including a 60-command mixed session.
+- Property-based state-machine tests that run 64 generated cases of 11 to 100
+  commands against the same independent model. Generated tails use small
+  participant, price, and quantity ranges and include limit/market orders plus
+  owner, wrong-participant, and missing-order cancellation actions.
 
 ## Deterministic Replay Verification
 
@@ -52,12 +56,12 @@ numbers, and next allocation values.
 
 ## Future Improvements
 
-Property-based testing is not implemented yet. The deterministic reference
-model is an independent matching oracle for ordinary limit orders, market
-orders, fills, priority, expiry, and cancellation, but does not cover allocation
-exhaustion, quantity overflow, schema conversion, or arbitrary generated input.
+Generated state-machine coverage now supplements the deterministic reference
+corpus. The model covers ordinary limit orders, market orders, fills, priority,
+expiry, and cancellation, but generated tests deliberately exclude allocation
+exhaustion, quantity overflow, persistence corruption, and schema conversion.
 Replay still proves repeatability through the production engine itself and is
-complementary to the reference-model comparison.
+complementary to both model-based test layers.
 
 ## Required Checks
 

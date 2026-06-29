@@ -23,11 +23,12 @@ Aster currently provides:
 - explicit accepted, rejected, trade, and cancellation events;
 - deterministic full-state snapshots and fresh-engine command replay;
 - an independent reference model for matching comparisons;
+- property-based state-machine comparisons over generated command sequences;
 - V1 command/event/snapshot schema records with structural validation;
 - completed-session persistence using JSONL command/event logs and snapshot
   JSON;
 - a deterministic CLI scenario runner;
-- 170 unit and integration tests plus focused Criterion benchmarks.
+- 171 unit and integration tests plus focused Criterion benchmarks.
 
 Prices are integer ticks and quantities are integer units. Matching priority is
 controlled by engine-assigned sequence numbers, never wall-clock timestamps.
@@ -205,6 +206,6 @@ and tested. The next technical work has not been selected.
 
 Aster has no production durability guarantee, crash-safe writes, append-only
 live journal, schema migration framework, database/recovery system, risk engine,
-network protocol, property-based tests, multi-symbol layer, or
+network protocol, persistence/schema fuzzing, multi-symbol layer, or
 regulatory/operational controls. Those omissions are explicit so the implemented
 core can be evaluated on what it actually proves.
