@@ -68,6 +68,9 @@ replay as the source of truth.
 - Versioned schema DTOs exist in `aster-core::schema`.
 - The current schema version is `1`.
 - Command, event, and snapshot records can round-trip through JSON in memory.
+- Snapshot DTO conversion validates visible-book structure, summary values,
+  matching/FIFO order, unique identities, uncrossed prices, and allocator
+  bounds.
 - There is no file IO.
 - There are no JSONL session files.
 - There is no durable command journal or recovery workflow.
@@ -75,6 +78,11 @@ replay as the source of truth.
 
 The session record is an internal domain model, not a persisted session DTO. It
 does not perform file I/O and does not define a JSON or JSONL session format.
+
+Snapshot validation rejects obviously inconsistent records before they become
+domain snapshots. This makes snapshots safer audit/checkpoint values, but does
+not make them authoritative recovery state. Commands remain the canonical replay
+input.
 
 ## Future State
 
@@ -122,6 +130,9 @@ Only the middle boundary exists today. The external saved-record layer is still 
 - Engine-assigned order IDs and sequence numbers must remain deterministic.
 - Migrations should be explicit and testable.
 - Unknown or unsupported schema versions should fail clearly rather than falling back silently.
+- Snapshot records should fail conversion when their summaries, visible orders,
+  ordering, identities, prices, sides, or allocator bounds are structurally
+  inconsistent.
 
 ## Replay Verification
 

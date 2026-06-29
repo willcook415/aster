@@ -1,3 +1,4 @@
+use super::snapshot_validation::validate_snapshot;
 use super::{
     AcceptedOrderDtoV1, CommandDtoV1, CommandRecordV1, EngineSnapshotDtoV1, EventDtoV1,
     EventRecordV1, PriceLevelSnapshotDtoV1, SnapshotRecordV1, ASTER_SCHEMA_VERSION,
@@ -218,7 +219,7 @@ impl TryFrom<EngineSnapshotDtoV1> for EngineSnapshot {
     type Error = AsterError;
 
     fn try_from(snapshot: EngineSnapshotDtoV1) -> Result<Self, Self::Error> {
-        Ok(Self {
+        let snapshot = Self {
             best_bid: snapshot.best_bid.map(PriceTicks::new).transpose()?,
             best_ask: snapshot.best_ask.map(PriceTicks::new).transpose()?,
             bid_level_count: snapshot.bid_level_count,
@@ -236,7 +237,10 @@ impl TryFrom<EngineSnapshotDtoV1> for EngineSnapshot {
                 .collect::<Result<_, _>>()?,
             next_order_id: OrderId::new(snapshot.next_order_id),
             next_sequence_number: SequenceNumber::new(snapshot.next_sequence_number),
-        })
+        };
+        validate_snapshot(&snapshot)?;
+
+        Ok(snapshot)
     }
 }
 

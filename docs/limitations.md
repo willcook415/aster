@@ -12,6 +12,8 @@ Current boundaries include:
 - One in-memory order book; there is no multi-symbol routing or exchange layer.
 - No file persistence, JSONL sessions, durable command/event logs, recovery
   process, or database.
+- Validated snapshots remain comparison/checkpoint records; no snapshot loading
+  or recovery authority is implemented.
 - No networking, FIX, WebSockets, market-data feeds, or external protocol
   integration.
 - No balances, positions, settlement, risk limits, user accounts,

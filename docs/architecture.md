@@ -38,11 +38,16 @@ order. The log records output events, not inbound command intentions.
 `aster-core::schema` defines version 1 DTOs for commands, events, accepted
 orders, and snapshots. Conversion and JSON round trips are tested in memory.
 Malformed DTO values and unsupported schema versions return explicit
-`AsterError`s.
+`AsterError`s. Snapshot conversion also rejects structurally impossible visible
+state, including inconsistent summaries, side or price mismatches, duplicate
+identities, invalid level/FIFO order, crossed books, and allocator state that
+does not follow visible orders.
 
 Schema serialization is not durable persistence. There is no file I/O, JSONL
 session storage, command journal, recovery process, or schema migration system.
-The planned persistence boundaries are documented in `docs/persistence.md`.
+Validated snapshots are deterministic summaries and possible checkpoints, not
+canonical recovery input. The planned persistence boundaries are documented in
+`docs/persistence.md`.
 
 ## Data Model
 

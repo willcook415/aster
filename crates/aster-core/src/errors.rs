@@ -28,6 +28,26 @@ pub enum AsterError {
     QuantityOverflow,
     /// An accepted order or engine state failed an internal invariant.
     InvalidOrderState,
+    /// Snapshot summary level counts do not match its visible levels.
+    SnapshotLevelCountMismatch,
+    /// Snapshot summary quantity does not match its visible resting orders.
+    SnapshotQuantityMismatch,
+    /// A snapshot resting order is stored on the wrong book side.
+    SnapshotSideMismatch,
+    /// Snapshot levels are not ordered from best price to worst price.
+    SnapshotLevelOrderInvalid,
+    /// Snapshot best-price summaries do not match its visible levels.
+    SnapshotBestPriceMismatch,
+    /// Snapshot bid and ask prices form a crossed book.
+    SnapshotBookCrossed,
+    /// Snapshot allocator state is not ahead of visible identities.
+    SnapshotAllocatorInvalid,
+    /// Snapshot FIFO sequence ordering is invalid.
+    SnapshotFifoInvalid,
+    /// A resting sequence number appears more than once in a snapshot.
+    DuplicateSequenceNumber,
+    /// A snapshot contains an empty price level.
+    SnapshotEmptyPriceLevel,
     /// A persisted schema record uses an unsupported schema version.
     UnsupportedSchemaVersion,
 }
@@ -50,6 +70,30 @@ impl fmt::Display for AsterError {
             Self::SequenceNumberExhausted => f.write_str("sequence number allocation is exhausted"),
             Self::QuantityOverflow => f.write_str("resting quantity would overflow"),
             Self::InvalidOrderState => f.write_str("invalid order state"),
+            Self::SnapshotLevelCountMismatch => {
+                f.write_str("snapshot level count does not match visible levels")
+            }
+            Self::SnapshotQuantityMismatch => {
+                f.write_str("snapshot quantity does not match visible resting orders")
+            }
+            Self::SnapshotSideMismatch => {
+                f.write_str("snapshot resting order is on the wrong book side")
+            }
+            Self::SnapshotLevelOrderInvalid => {
+                f.write_str("snapshot price levels are not in matching order")
+            }
+            Self::SnapshotBestPriceMismatch => {
+                f.write_str("snapshot best price does not match visible levels")
+            }
+            Self::SnapshotBookCrossed => f.write_str("snapshot book is crossed"),
+            Self::SnapshotAllocatorInvalid => {
+                f.write_str("snapshot allocator is not ahead of visible identities")
+            }
+            Self::SnapshotFifoInvalid => f.write_str("snapshot FIFO sequence order is invalid"),
+            Self::DuplicateSequenceNumber => {
+                f.write_str("snapshot sequence number appears more than once")
+            }
+            Self::SnapshotEmptyPriceLevel => f.write_str("snapshot contains an empty price level"),
             Self::UnsupportedSchemaVersion => f.write_str("unsupported schema version"),
         }
     }

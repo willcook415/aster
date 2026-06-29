@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 
 mod conversions;
 mod primitive_conversions;
+mod snapshot_validation;
 
 /// Current version for persisted Aster schema records.
 pub const ASTER_SCHEMA_VERSION: u16 = 1;
@@ -139,5 +140,15 @@ pub enum AsterErrorDtoV1 {
     SequenceNumberExhausted,
     QuantityOverflow,
     InvalidOrderState,
+    SnapshotLevelCountMismatch,
+    SnapshotQuantityMismatch,
+    SnapshotSideMismatch,
+    SnapshotLevelOrderInvalid,
+    SnapshotBestPriceMismatch,
+    SnapshotBookCrossed,
+    SnapshotAllocatorInvalid,
+    SnapshotFifoInvalid,
+    DuplicateSequenceNumber,
+    SnapshotEmptyPriceLevel,
     UnsupportedSchemaVersion,
 }

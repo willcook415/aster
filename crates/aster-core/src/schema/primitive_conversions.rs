@@ -57,6 +57,16 @@ impl From<AsterError> for AsterErrorDtoV1 {
             AsterError::SequenceNumberExhausted => Self::SequenceNumberExhausted,
             AsterError::QuantityOverflow => Self::QuantityOverflow,
             AsterError::InvalidOrderState => Self::InvalidOrderState,
+            AsterError::SnapshotLevelCountMismatch => Self::SnapshotLevelCountMismatch,
+            AsterError::SnapshotQuantityMismatch => Self::SnapshotQuantityMismatch,
+            AsterError::SnapshotSideMismatch => Self::SnapshotSideMismatch,
+            AsterError::SnapshotLevelOrderInvalid => Self::SnapshotLevelOrderInvalid,
+            AsterError::SnapshotBestPriceMismatch => Self::SnapshotBestPriceMismatch,
+            AsterError::SnapshotBookCrossed => Self::SnapshotBookCrossed,
+            AsterError::SnapshotAllocatorInvalid => Self::SnapshotAllocatorInvalid,
+            AsterError::SnapshotFifoInvalid => Self::SnapshotFifoInvalid,
+            AsterError::DuplicateSequenceNumber => Self::DuplicateSequenceNumber,
+            AsterError::SnapshotEmptyPriceLevel => Self::SnapshotEmptyPriceLevel,
             AsterError::UnsupportedSchemaVersion => Self::UnsupportedSchemaVersion,
         }
     }
@@ -76,6 +86,16 @@ impl From<AsterErrorDtoV1> for AsterError {
             AsterErrorDtoV1::SequenceNumberExhausted => Self::SequenceNumberExhausted,
             AsterErrorDtoV1::QuantityOverflow => Self::QuantityOverflow,
             AsterErrorDtoV1::InvalidOrderState => Self::InvalidOrderState,
+            AsterErrorDtoV1::SnapshotLevelCountMismatch => Self::SnapshotLevelCountMismatch,
+            AsterErrorDtoV1::SnapshotQuantityMismatch => Self::SnapshotQuantityMismatch,
+            AsterErrorDtoV1::SnapshotSideMismatch => Self::SnapshotSideMismatch,
+            AsterErrorDtoV1::SnapshotLevelOrderInvalid => Self::SnapshotLevelOrderInvalid,
+            AsterErrorDtoV1::SnapshotBestPriceMismatch => Self::SnapshotBestPriceMismatch,
+            AsterErrorDtoV1::SnapshotBookCrossed => Self::SnapshotBookCrossed,
+            AsterErrorDtoV1::SnapshotAllocatorInvalid => Self::SnapshotAllocatorInvalid,
+            AsterErrorDtoV1::SnapshotFifoInvalid => Self::SnapshotFifoInvalid,
+            AsterErrorDtoV1::DuplicateSequenceNumber => Self::DuplicateSequenceNumber,
+            AsterErrorDtoV1::SnapshotEmptyPriceLevel => Self::SnapshotEmptyPriceLevel,
             AsterErrorDtoV1::UnsupportedSchemaVersion => Self::UnsupportedSchemaVersion,
         }
     }
