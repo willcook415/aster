@@ -3,7 +3,7 @@
 ## Snapshot
 
 - 2026-06-22 [USER]: Goal is Aster, a Rust central limit order book / exchange matching engine project.
-- 2026-06-29 [USER]: Current task hardens rejected-submission atomicity without expanding MVP scope.
+- 2026-06-29 [USER]: Current task adds independent deterministic model-based matching tests without expanding MVP scope.
 - 2026-06-22 [USER]: First credible MVP should prioritize deterministic matching, event logs, replayability, tests, benchmarks, and docs.
 - 2026-06-22 [CODE]: Workspace scaffold contains root Cargo workspace, `aster-core`, `aster-cli`, docs skeletons, README, `.gitignore`, and this ledger.
 - 2026-06-22 [CODE]: `aster-core` includes typed integer primitives, order request/accepted order models, small domain errors, and validation helpers.
@@ -14,7 +14,6 @@
 - 2026-06-22 [CODE]: `aster-core` includes in-memory replay from command sequences with deterministic final snapshots.
 - 2026-06-22 [CODE]: `AsterEngine` retains an in-memory append-only event log of emitted `EngineEvent`s.
 - 2026-06-22 [CODE]: `aster-core` has Criterion benchmarks for passive insertion, crossing matching, market sweeps, cancellation, mixed sessions, and replay.
-- 2026-06-22 [CODE]: `aster-cli` runs a deterministic in-memory demo session covering passive liquidity, crossing limit matching, market sweep, successful cancellation, rejected cancellation, final snapshot, and event-log length.
 - 2026-06-22 [CODE]: `docs/persistence.md` documents the future boundary: command log as canonical replay input, event log as audit output, snapshot as deterministic state summary.
 - 2026-06-22 [CODE]: `aster-core::schema` defines version 1 DTO records for commands, events, and snapshots with conversions to/from internal engine types.
 - 2026-06-27 [CODE]: `EngineSnapshot` includes ordered bid/ask levels, FIFO resting orders, complete accepted-order fields, and next allocation values.
@@ -24,6 +23,7 @@
 - 2026-06-27 [CODE]: `SessionRecord` captures ordered commands, emitted events, and the final full snapshot; verification distinguishes event and snapshot mismatches.
 - 2026-06-27 [CODE]: `aster-cli` provides four named scenarios with ordered command/event reports, full book output, and session verification status.
 - 2026-06-29 [CODE]: Limit submissions preflight projected post-match resting quantity so capacity rejection occurs before book mutation, event emission, or allocator advancement.
+- 2026-06-29 [CODE]: A test-only `Vec`-based reference model independently checks exact events and full snapshots across 11 deterministic sequences and 100 commands.
 - 2026-06-22 [ASSUMPTION]: Initial workspace uses Rust 2021 edition and no third-party dependencies.
 
 ## Decisions
@@ -37,13 +37,13 @@
 
 ## Done (recent)
 
-- 2026-06-22 [CODE]: Implemented `AsterEngine` with deterministic limit matching, market execution, cancellation, partial/full fills, and resting limit remainders.
 - 2026-06-27 [CODE]: Added in-memory session construction and fresh-engine replay verification tests; no session DTO, file I/O, or JSONL.
 - 2026-06-27 [CODE]: Added tested CLI listing, lookup, default scenario, formatted output, and clear unknown-scenario errors without new dependencies.
 - 2026-06-27 [CODE]: Added golden fixture deserialization, DTO serialization-shape, domain-conversion, missing-field, malformed-value, and version tests.
 - 2026-06-27 [CODE]: Added deterministic full-snapshot invariant and accounting coverage for complex command sequences.
 - 2026-06-27 [CODE]: Strengthened engine/schema snapshots and replay tests to compare complete deterministic visible state; no file IO or matching changes.
 - 2026-06-29 [CODE]: Reproduced and fixed late-overflow partial mutation; focused tests lock snapshot, event-log, allocator, liquidity, and successful matching behavior.
+- 2026-06-29 [CODE]: Added independent deterministic model comparison for matching, priority, fills, expiry, cancellation, exact events, and complete visible state; no production bug found.
 
 ## Working set
 
@@ -52,7 +52,7 @@
 - 2026-06-22 [CODE]: `crates/aster-core/src/schema.rs`
 - 2026-06-22 [CODE]: `crates/aster-core/src/schema/`
 - 2026-06-22 [CODE]: `crates/aster-core/tests/schema_tests.rs`
-- 2026-06-27 [CODE]: `crates/aster-core/tests/invariant_tests.rs`
+- 2026-06-29 [CODE]: `crates/aster-core/tests/reference_model_tests.rs`
 - 2026-06-27 [CODE]: `crates/aster-core/src/session.rs`
 - 2026-06-27 [CODE]: `crates/aster-cli/src/`
 - 2026-06-22 [CODE]: `README.md`
@@ -64,6 +64,7 @@
 
 - 2026-06-27 [USER]: Deterministic CLI scenario-runner milestone completed; next development direction is UNCONFIRMED.
 - 2026-06-29 [USER]: Rejected-submission atomicity hardening completed; subsequent development direction remains UNCONFIRMED.
+- 2026-06-29 [USER]: Independent deterministic model-testing milestone completed; subsequent development direction remains UNCONFIRMED.
 
 ## Open questions
 
@@ -91,3 +92,4 @@
 - 2026-06-27 [TOOL]: In-memory sessions passed `cargo fmt`, clippy with warnings denied, all 134 workspace tests, benchmark compilation, and `git diff --check`.
 - 2026-06-27 [TOOL]: CLI scenario runner passed `cargo fmt`, strict clippy, all 141 workspace tests, benchmark compilation, all four scenario runs, listing, and `git diff --check`.
 - 2026-06-29 [TOOL]: Atomicity hardening passed `cargo fmt --check`, strict clippy, all 146 workspace tests, benchmark compilation, and default/list/all four CLI scenario runs.
+- 2026-06-29 [TOOL]: Independent model testing passed formatting, strict clippy, all 147 workspace tests, benchmark compilation, and default/list/all four CLI scenario runs.

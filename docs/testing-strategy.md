@@ -6,7 +6,7 @@ Correctness and determinism should be proven before performance work.
 
 ## Current Coverage
 
-The workspace currently has 141 passing tests. Coverage is divided across:
+The workspace currently has 147 passing tests. Coverage is divided across:
 
 - Unit tests for typed constructors, commands, events, allocation exhaustion,
   and primitive validation.
@@ -32,6 +32,9 @@ The workspace currently has 141 passing tests. Coverage is divided across:
 - Mixed-session invariant tests covering uncrossed books, deterministic level
   order, FIFO identity, unique resting IDs, cancellation invariants, full replay
   equality, and explicit quantity accounting.
+- An independent test-only reference model that compares exact events and full
+  visible snapshots after every command across 11 deterministic sequences and
+  100 commands, including a 60-command mixed session.
 
 ## Deterministic Replay Verification
 
@@ -42,10 +45,12 @@ numbers, and next allocation values.
 
 ## Future Improvements
 
-Property-based and independent model-based testing are not implemented yet.
-They remain useful future additions after the deterministic table-driven
-invariants are stable. The current replay tests prove repeatability through the
-same engine implementation; they are not an independent matching oracle.
+Property-based testing is not implemented yet. The deterministic reference
+model is an independent matching oracle for ordinary limit orders, market
+orders, fills, priority, expiry, and cancellation, but does not cover allocation
+exhaustion, quantity overflow, schema conversion, or arbitrary generated input.
+Replay still proves repeatability through the production engine itself and is
+complementary to the reference-model comparison.
 
 ## Required Checks
 

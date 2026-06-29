@@ -22,7 +22,9 @@ Current boundaries include:
   recovery, or other production exchange hardening.
 - Only limit and market orders are supported. Advanced order instructions and
   venue-specific rules are absent.
-- Property-based and independent model-based testing are not implemented.
+- Property-based testing is not implemented. Independent model comparison
+  currently uses a fixed deterministic command corpus rather than generated
+  arbitrary inputs.
 - Benchmarks are focused development workloads, not production capacity or
   latency claims.
 
