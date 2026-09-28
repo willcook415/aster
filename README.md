@@ -5,10 +5,34 @@ written in Rust. It models the core mechanics behind an exchange: accepting
 commands, matching orders by price-time priority, emitting explicit events, and
 rebuilding state from the same ordered command log.
 
-The project exists to demonstrate finance-safe domain modelling, deterministic
-state transitions, audit-friendly boundaries, correctness-focused testing, and
-measured systems engineering. It is a portfolio project, not production
-financial infrastructure.
+The focus is correctness: typed integer prices and quantities, explicit state
+transitions, and matching behaviour checked against an independent reference
+model. This is a portfolio project, not production financial infrastructure.
+
+## Quickstart
+
+Requirements:
+
+- Stable Rust and Cargo. The workspace declares Rust 1.75, but the current
+  dependency lockfile is tested on stable; that minimum is not verified in CI.
+
+Clone the repository and run the default `mixed-session` scenario:
+
+```bash
+git clone https://github.com/willcook415/aster.git
+cd aster
+cargo run --locked -p aster-cli
+```
+
+List and run named scenarios:
+
+```bash
+cargo run -p aster-cli -- list
+cargo run -p aster-cli -- scenario mixed-session
+```
+
+The report includes commands, emitted events, event counts, the complete final
+book, allocator state, and replay verification.
 
 ## What Aster Is
 
@@ -28,7 +52,7 @@ Aster currently provides:
 - completed-session persistence using JSONL command/event logs and snapshot
   JSON;
 - a deterministic CLI scenario runner;
-- 171 unit and integration tests plus focused Criterion benchmarks.
+- rule, invariant and property-based tests plus focused Criterion benchmarks.
 
 Prices are integer ticks and quantities are integer units. Matching priority is
 controlled by engine-assigned sequence numbers, never wall-clock timestamps.
@@ -101,33 +125,8 @@ The precise rules are documented in
 |   |-- performance.md
 |   |-- persistence.md
 |   `-- limitations.md
-|-- AGENTS.md              Repository engineering rules
-|-- CONTINUITY.md          Bounded project continuity ledger
 `-- Cargo.toml
 ```
-
-## Quickstart
-
-Requirements:
-
-- Rust 1.75 or newer;
-- Cargo.
-
-Run the default `mixed-session` scenario:
-
-```bash
-cargo run -p aster-cli
-```
-
-List and run named scenarios:
-
-```bash
-cargo run -p aster-cli -- list
-cargo run -p aster-cli -- scenario mixed-session
-```
-
-The report includes commands, emitted events, event counts, the complete final
-book, allocator state, and replay verification.
 
 ## Export and Verify a Session
 
