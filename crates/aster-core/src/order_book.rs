@@ -19,6 +19,7 @@ pub struct OrderBook {
     bids: BTreeMap<PriceTicks, PriceLevel>,
     asks: BTreeMap<PriceTicks, PriceLevel>,
     order_index: HashMap<OrderId, (Side, PriceTicks)>,
+    total_resting_quantity: u64,
 }
 
 impl OrderBook {
@@ -28,6 +29,7 @@ impl OrderBook {
             bids: BTreeMap::new(),
             asks: BTreeMap::new(),
             order_index: HashMap::new(),
+            total_resting_quantity: 0,
         }
     }
 
@@ -81,13 +83,14 @@ impl OrderBook {
         self.order_index.contains_key(&order_id)
     }
 
+    /// Number of resting orders, without walking price levels.
+    pub fn resting_order_count(&self) -> usize {
+        self.order_index.len()
+    }
+
     /// Returns total resting quantity across both sides of the book.
     pub fn total_resting_quantity(&self) -> u64 {
-        self.bids
-            .values()
-            .chain(self.asks.values())
-            .map(PriceLevel::total_quantity)
-            .sum()
+        self.total_resting_quantity
     }
 
     /// Iterates over bid levels from best price to worst price.
@@ -141,7 +144,8 @@ impl OrderBook {
         let OrderType::Limit { price } = order.order_type else {
             return Err(AsterError::MarketOrderCannotRest);
         };
-        self.total_resting_quantity()
+        let total = self
+            .total_resting_quantity
             .checked_add(order.quantity.as_u64())
             .ok_or(AsterError::QuantityOverflow)?;
 
@@ -155,6 +159,7 @@ impl OrderBook {
             .or_insert_with(|| PriceLevel::new(price))
             .push_back(order)?;
         self.order_index.insert(order.order_id, (order.side, price));
+        self.total_resting_quantity = total;
 
         Ok(())
     }
@@ -196,6 +201,7 @@ impl OrderBook {
         };
         let level = levels.get_mut(&price)?;
         let order = level.pop_front()?;
+        self.total_resting_quantity -= order.quantity.as_u64();
         self.order_index.remove(&order.order_id);
         if level.is_empty() {
             levels.remove(&price);
@@ -216,6 +222,7 @@ impl OrderBook {
         };
         let level = levels.get_mut(&price)?;
         let order = level.remove_order(order_id)?;
+        self.total_resting_quantity -= order.quantity.as_u64();
         if level.is_empty() {
             levels.remove(&price);
         }
@@ -244,7 +251,14 @@ impl OrderBook {
             .get_mut(&price)
             .ok_or(AsterError::InvalidOrderState)?;
 
-        level.reduce_front_quantity(new_quantity)
+        let old_quantity = level
+            .front()
+            .ok_or(AsterError::InvalidOrderState)?
+            .quantity
+            .as_u64();
+        level.reduce_front_quantity(new_quantity)?;
+        self.total_resting_quantity -= old_quantity - new_quantity.as_u64();
+        Ok(())
     }
 }
 

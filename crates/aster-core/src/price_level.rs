@@ -14,6 +14,7 @@ use crate::{AcceptedOrder, AsterError, OrderId, OrderType, PriceTicks, Quantity}
 pub struct PriceLevel {
     price: PriceTicks,
     orders: VecDeque<AcceptedOrder>,
+    total_quantity: u64,
 }
 
 impl PriceLevel {
@@ -22,6 +23,7 @@ impl PriceLevel {
         Self {
             price,
             orders: VecDeque::new(),
+            total_quantity: 0,
         }
     }
 
@@ -42,22 +44,19 @@ impl PriceLevel {
 
     /// Returns the sum of resting quantities in this level.
     pub fn total_quantity(&self) -> u64 {
-        self.orders
-            .iter()
-            .try_fold(0_u64, |total, order| {
-                total.checked_add(order.quantity.as_u64())
-            })
-            .expect("PriceLevel rejects quantity overflow when orders are inserted")
+        self.total_quantity
     }
 
     /// Adds a resting limit order to the back of the FIFO queue.
     pub fn push_back(&mut self, order: AcceptedOrder) -> Result<(), AsterError> {
         match order.order_type {
             OrderType::Limit { price } if price == self.price => {
-                self.total_quantity()
+                let total = self
+                    .total_quantity
                     .checked_add(order.quantity.as_u64())
                     .ok_or(AsterError::QuantityOverflow)?;
                 self.orders.push_back(order);
+                self.total_quantity = total;
                 Ok(())
             }
             OrderType::Limit { .. } => Err(AsterError::PriceLevelMismatch),
@@ -72,7 +71,9 @@ impl PriceLevel {
 
     /// Removes and returns the oldest resting order.
     pub fn pop_front(&mut self) -> Option<AcceptedOrder> {
-        self.orders.pop_front()
+        let order = self.orders.pop_front()?;
+        self.total_quantity -= order.quantity.as_u64();
+        Some(order)
     }
 
     /// Reduces the oldest resting order without changing its FIFO priority.
@@ -87,20 +88,13 @@ impl PriceLevel {
         if new_quantity.as_u64() > current_front_quantity {
             return Err(AsterError::InvalidOrderState);
         }
-        let quantity_without_front = self
-            .total_quantity()
-            .checked_sub(current_front_quantity)
-            .ok_or(AsterError::InvalidOrderState)?;
-        quantity_without_front
-            .checked_add(new_quantity.as_u64())
-            .ok_or(AsterError::QuantityOverflow)?;
-
         let front = self
             .orders
             .front_mut()
             .ok_or(AsterError::InvalidOrderState)?;
 
         front.quantity = new_quantity;
+        self.total_quantity -= current_front_quantity - new_quantity.as_u64();
 
         Ok(())
     }
@@ -112,7 +106,9 @@ impl PriceLevel {
             .iter()
             .position(|order| order.order_id == order_id)?;
 
-        self.orders.remove(index)
+        let order = self.orders.remove(index)?;
+        self.total_quantity -= order.quantity.as_u64();
+        Some(order)
     }
 
     /// Returns whether this level contains an order ID.

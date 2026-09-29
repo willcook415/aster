@@ -212,8 +212,7 @@ enum GeneratedAction {
 
 proptest! {
     #![proptest_config(ProptestConfig {
-        cases: 64,
-        failure_persistence: None,
+        cases: std::env::var("ASTER_PROPTEST_CASES").map(|value| value.parse().expect("ASTER_PROPTEST_CASES must be a positive integer")).unwrap_or(64),
         ..ProptestConfig::default()
     })]
 

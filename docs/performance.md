@@ -28,9 +28,23 @@ Current benchmark scale:
 
 The mixed sessions include passive limit orders, crossing limit orders, market orders, and cancellations.
 
+## Scaling matrix and measured improvement
+
+`cargo bench --locked -p aster-core --bench scaling` adds 25 workloads: one-level
+and many-level insertion at 100/1,000/4,000 orders; head/middle/tail/seeded-random
+cancellation at 1,000/4,000; large and small market sweeps over one/many levels;
+partial fills; capacity rejection; and JSON command serialization.
+
+See the [aggregate-cache investigation](benchmarks/cache-investigation.md) and
+[all measured means and 95% confidence intervals](benchmarks/2026-09-29-cache.csv).
+Cached level/book totals remove repeated full-book quantity scans. Insertion
+improved substantially; cancellation still scans queues, and measured tail/random
+cancellation regressed. Setup and destruction are excluded with Criterion's
+`iter_batched_ref`; matching event generation and retained V1 logs are included.
+
 ## Non-Goals
 
-Current benchmarks do not measure file persistence, schema serialization,
+Current benchmarks do not measure file persistence, journal synchronization,
 networking, multi-symbol routing, database I/O, UI paths, or real market data
 ingestion.
 
