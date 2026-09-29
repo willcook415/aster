@@ -15,6 +15,7 @@ pub const ASTER_SCHEMA_VERSION: u16 = 1;
 
 /// Versioned command record.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct CommandRecordV1 {
     pub schema_version: u16,
     pub command: CommandDtoV1,
@@ -22,7 +23,7 @@ pub struct CommandRecordV1 {
 
 /// Serializable command payload.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(tag = "type", rename_all = "snake_case")]
+#[serde(tag = "type", rename_all = "snake_case", deny_unknown_fields)]
 pub enum CommandDtoV1 {
     SubmitOrder {
         participant_id: u64,
@@ -38,6 +39,7 @@ pub enum CommandDtoV1 {
 
 /// Versioned event record.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct EventRecordV1 {
     pub schema_version: u16,
     pub event: EventDtoV1,
@@ -45,7 +47,7 @@ pub struct EventRecordV1 {
 
 /// Serializable event payload.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(tag = "type", rename_all = "snake_case")]
+#[serde(tag = "type", rename_all = "snake_case", deny_unknown_fields)]
 pub enum EventDtoV1 {
     OrderAccepted {
         order: AcceptedOrderDtoV1,
@@ -72,6 +74,7 @@ pub enum EventDtoV1 {
 
 /// Serializable accepted-order payload.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct AcceptedOrderDtoV1 {
     pub order_id: u64,
     pub participant_id: u64,
@@ -83,6 +86,7 @@ pub struct AcceptedOrderDtoV1 {
 
 /// Versioned snapshot record.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct SnapshotRecordV1 {
     pub schema_version: u16,
     pub snapshot: EngineSnapshotDtoV1,
@@ -90,6 +94,7 @@ pub struct SnapshotRecordV1 {
 
 /// Serializable engine snapshot payload.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct EngineSnapshotDtoV1 {
     pub best_bid: Option<u64>,
     pub best_ask: Option<u64>,
@@ -104,6 +109,7 @@ pub struct EngineSnapshotDtoV1 {
 
 /// Serializable price level with resting orders in FIFO order.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct PriceLevelSnapshotDtoV1 {
     pub price: u64,
     pub orders: Vec<AcceptedOrderDtoV1>,
@@ -119,7 +125,7 @@ pub enum SideDtoV1 {
 
 /// Serializable order type.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(tag = "type", rename_all = "snake_case")]
+#[serde(tag = "type", rename_all = "snake_case", deny_unknown_fields)]
 pub enum OrderTypeDtoV1 {
     Limit { price: u64 },
     Market,
