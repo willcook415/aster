@@ -21,6 +21,11 @@ pub const COMMANDS_FILE_NAME: &str = "commands.jsonl";
 pub const EVENTS_FILE_NAME: &str = "events.jsonl";
 pub const SNAPSHOT_FILE_NAME: &str = "snapshot.json";
 
+/// Loads strict V1 command JSONL without requiring saved audit outputs.
+pub fn load_command_file(path: impl AsRef<Path>) -> Result<Vec<EngineCommand>, PersistenceError> {
+    read_json_lines::<CommandRecordV1, EngineCommand>(path.as_ref(), "command record")
+}
+
 /// Failure while saving, loading, or verifying a persisted session.
 #[derive(Debug)]
 pub enum PersistenceError {

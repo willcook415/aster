@@ -66,6 +66,7 @@ pub mod command;
 pub mod engine;
 pub mod errors;
 pub mod event;
+pub mod journal;
 pub mod order;
 pub mod order_book;
 pub mod persistence;
@@ -81,11 +82,12 @@ pub use command::EngineCommand;
 pub use engine::{AsterEngine, EngineSnapshot, PriceLevelSnapshot};
 pub use errors::AsterError;
 pub use event::EngineEvent;
+pub use journal::{recover_journal, CommandJournal, JournalError, RecoveryReport};
 pub use order::{AcceptedOrder, OrderRequest, OrderType, Side};
 pub use order_book::OrderBook;
 pub use persistence::{
-    load_session_record, save_session_record, verify_session_directory, PersistenceError,
-    COMMANDS_FILE_NAME, EVENTS_FILE_NAME, SNAPSHOT_FILE_NAME,
+    load_command_file, load_session_record, save_session_record, verify_session_directory,
+    PersistenceError, COMMANDS_FILE_NAME, EVENTS_FILE_NAME, SNAPSHOT_FILE_NAME,
 };
 pub use price_level::PriceLevel;
 pub use replay::{replay_commands, ReplayResult};
