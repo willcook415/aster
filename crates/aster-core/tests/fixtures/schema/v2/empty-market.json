@@ -1,0 +1,11 @@
+{
+  "schema_version": 2,
+  "matching_rules_version": 1,
+  "command_sequence": 1,
+  "command": {"type":"submit_order","participant_id":1,"side":"buy","order_type":{"type":"market"},"quantity":3},
+  "events": [
+    {"event_sequence":1,"command_sequence":1,"event":{"type":"engine_event","event":{"type":"order_accepted","order":{"order_id":1,"participant_id":1,"side":"buy","order_type":{"type":"market"},"quantity":3,"sequence_number":1}}}},
+    {"event_sequence":2,"command_sequence":1,"event":{"type":"order_expired","order_id":1,"remaining_quantity":3,"reason":"insufficient_liquidity"}},
+    {"event_sequence":3,"command_sequence":1,"event":{"type":"command_completed"}}
+  ]
+}

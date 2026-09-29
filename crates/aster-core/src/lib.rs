@@ -72,6 +72,7 @@ pub mod persistence;
 pub mod price_level;
 pub mod replay;
 pub mod schema;
+pub mod sequenced;
 pub mod session;
 pub mod types;
 pub mod validation;
@@ -92,6 +93,10 @@ pub use schema::{
     AcceptedOrderDtoV1, AsterErrorDtoV1, CommandDtoV1, CommandRecordV1, EngineSnapshotDtoV1,
     EventDtoV1, EventRecordV1, OrderTypeDtoV1, PriceLevelSnapshotDtoV1, SideDtoV1,
     SnapshotRecordV1, ASTER_SCHEMA_VERSION,
+};
+pub use sequenced::{
+    AuditEventV2, CommandBatchV2, ExpiryReasonV2, SequencedEngine, SequencedEventV2,
+    AUDIT_SCHEMA_VERSION, MATCHING_RULES_VERSION,
 };
 pub use session::{SessionRecord, SessionVerificationError};
 pub use types::{OrderId, ParticipantId, PriceTicks, Quantity, SequenceNumber};
