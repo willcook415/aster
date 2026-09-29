@@ -76,6 +76,7 @@ impl PriceLevel {
     }
 
     /// Reduces the oldest resting order without changing its FIFO priority.
+    /// Equal quantity is a no-op. Increases are rejected before mutation.
     pub fn reduce_front_quantity(&mut self, new_quantity: Quantity) -> Result<(), AsterError> {
         let current_front_quantity = self
             .orders
@@ -83,6 +84,9 @@ impl PriceLevel {
             .ok_or(AsterError::InvalidOrderState)?
             .quantity
             .as_u64();
+        if new_quantity.as_u64() > current_front_quantity {
+            return Err(AsterError::InvalidOrderState);
+        }
         let quantity_without_front = self
             .total_quantity()
             .checked_sub(current_front_quantity)

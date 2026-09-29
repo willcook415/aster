@@ -192,7 +192,7 @@ fn rejects_front_quantity_change_that_would_overflow_level_total() {
 
     let result = level.reduce_front_quantity(quantity(2));
 
-    assert_eq!(result, Err(AsterError::QuantityOverflow));
+    assert_eq!(result, Err(AsterError::InvalidOrderState));
     assert_eq!(level.front().expect("front remains").quantity.as_u64(), 1);
     assert_eq!(level.total_quantity(), u64::MAX);
 }
