@@ -91,3 +91,18 @@ standard lockfile-keyed caching.
 - [Matching rules](matching-rules.md)
 - [Performance](performance.md)
 - [Limitations](limitations.md)
+
+## Audit-roadmap additions
+
+Quantity-increase atomicity, u64 maximum book totals, cached-total recomputation,
+and command partition equivalence have dedicated regressions. V2 golden and
+mutation tests cover expiry, completion, rejected-command correlation, sequence
+exhaustion, and rules-version rejection. Journal tests cover every byte of a torn
+final frame, complete corruption, chain reordering/removal, exclusive locks,
+continued sequences and process termination without destructors. Writer fault
+injection tests failed writes and synchronization. See [recovery](recovery.md).
+
+CI runs Rust 1.89 and stable on Windows and Ubuntu; the weekly/manual extended
+workflow raises generated model cases to 4,096 and saves failure seed files.
+For a local extended run set `ASTER_PROPTEST_CASES=4096` and `PROPTEST_CASES=2048`
+before `cargo test -p aster-core --test reference_model_tests --test aggregate_tests`.

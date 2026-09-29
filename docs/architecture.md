@@ -62,3 +62,13 @@ positive integers rather than floating-point values.
 - [Testing strategy](testing-strategy.md)
 - [Persistence](persistence.md)
 - [Limitations](limitations.md)
+
+## Optional audit and durable adapter
+
+`SequencedEngine` wraps V1 matching with V2 command/event sequences and expiry
+facts, releasing accumulated V1 events after each command. `CommandJournal` owns
+an exclusive file lock, stages a clone, writes and synchronizes each frame, and
+installs state only after successful synchronization. Recovery validates the
+whole frame chain and replays commands. These are separate layers above matching;
+see [audit events](audit-events.md) and [recovery](recovery.md). Book and level
+quantity totals are cached and checked on every mutation.

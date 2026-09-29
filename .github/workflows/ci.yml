@@ -1,57 +1,66 @@
 name: CI
-
 on:
   push:
   pull_request:
-
 permissions:
   contents: read
-
 jobs:
   quality:
-    name: Rust quality gates
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-
+    name: ${{ matrix.os }} / Rust ${{ matrix.rust }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        rust: [stable, '1.89.0']
+    defaults:
+      run:
+        shell: bash
+    env:
+      RUSTDOCFLAGS: -D warnings
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v6
-
-      - name: Install stable Rust
-        run: |
-          rustup toolchain install stable --profile minimal --component rustfmt,clippy
-          rustup default stable
-          rustc --version
-
-      - name: Cache Cargo files
-        uses: actions/cache@v4
+      - uses: actions/checkout@v6
+      - name: Install supported toolchain
+        run: rustup toolchain install ${{ matrix.rust }} --profile minimal --component rustfmt,clippy
+      - uses: actions/cache@v4
         with:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
             target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-
-
+          key: ${{ runner.os }}-${{ matrix.rust }}-cargo-${{ hashFiles('Cargo.lock') }}
       - name: Check formatting
-        run: cargo fmt --check
-
-      - name: Run Clippy
-        run: cargo clippy --workspace --all-targets -- -D warnings
-
-      - name: Run tests
-        run: cargo test --workspace
-
-      - name: Compile benchmarks
-        run: cargo bench -p aster-core --no-run
-
-      - name: Build documentation
-        run: cargo doc --workspace --no-deps
-
-      - name: Smoke-test CLI and persisted session
+        if: matrix.rust == 'stable'
+        run: cargo +${{ matrix.rust }} fmt --check
+      - name: Strict Clippy
+        if: matrix.rust == 'stable'
+        run: cargo +${{ matrix.rust }} clippy --workspace --all-targets --locked -- -D warnings
+      - name: Tests
+        run: cargo +${{ matrix.rust }} test --workspace --locked
+      - name: Release boundary regressions
+        run: cargo +${{ matrix.rust }} test --release --locked -p aster-core --test quantity_contract_tests --test aggregate_tests --test sequenced_tests --test journal_tests
+      - name: Compile benchmarks and API docs
         run: |
-          cargo run -p aster-cli -- list
-          cargo run -p aster-cli -- scenario mixed-session
-          cargo run -p aster-cli -- export mixed-session ./target/aster-ci-smoke/mixed-session
-          cargo run -p aster-cli -- verify ./target/aster-ci-smoke/mixed-session
+          cargo +${{ matrix.rust }} bench -p aster-core --locked --no-run
+          cargo +${{ matrix.rust }} doc --workspace --no-deps --locked
+      - name: CLI smoke
+        run: |
+          cargo +${{ matrix.rust }} run --locked -p aster-cli -- run examples/fifo.jsonl target/ci-session
+          cargo +${{ matrix.rust }} run --locked -p aster-cli -- verify target/ci-session
+          journal_dir=$(mktemp -d)
+          cargo +${{ matrix.rust }} run --locked -p aster-cli -- journal examples/fifo.jsonl "$journal_dir/smoke.aster"
+          cargo +${{ matrix.rust }} run --locked -p aster-cli -- recover "$journal_dir/smoke.aster"
+      - name: Save API documentation
+        if: matrix.os == 'ubuntu-latest' && matrix.rust == 'stable'
+        uses: actions/upload-artifact@v4
+        with:
+          name: aster-api-docs
+          path: target/doc
+      - name: Preserve property-test regressions
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: regressions-${{ matrix.os }}-${{ matrix.rust }}
+          path: '**/proptest-regressions/**'
+          if-no-files-found: ignore

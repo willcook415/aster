@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="250" viewBox="0 0 900 250" role="img" aria-labelledby="title desc">
+<title id="title">Aster price-time matching example</title><desc id="desc">Two asks at 101 for 10 and 7 units. A buy limit for 12 at 102 fills the first ask for 10 and the second for 2 at price 101. Five units remain. Replay matches.</desc>
+<rect width="900" height="250" rx="12" fill="#101820"/>
+<g font-family="monospace" fill="#e1edf4"><text x="28" y="40" font-size="22">ASTER / PRICE–TIME PRIORITY</text>
+<g font-size="16"><text x="28" y="86">RESTING ASKS @ 101</text><text x="345" y="86">BUY 12 @ LIMIT 102</text><text x="655" y="86">FINAL BOOK</text></g>
+<g fill="#1d3443"><rect x="28" y="104" width="245" height="42" rx="6"/><rect x="28" y="156" width="245" height="42" rx="6"/></g>
+<g font-size="15"><text x="42" y="131">#1 / older / 10 units</text><text x="42" y="183">#2 / newer /  7 units</text><text x="345" y="126">1. Fill #1: 10 @ 101</text><text x="345" y="163">2. Fill #2:  2 @ 101</text><text x="655" y="126">#2 / 5 units @ 101</text><text x="655" y="163" fill="#74dec1">REPLAY VERIFIED</text></g>
+<text x="28" y="228" fill="#9aafbf" font-size="13">Run: cargo run --locked -p aster-cli -- run examples/fifo.jsonl</text></g></svg>

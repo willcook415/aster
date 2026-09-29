@@ -2,101 +2,76 @@
 
 ## Snapshot
 
-- 2026-06-22 [USER]: Goal is Aster, a Rust central limit order book / exchange matching engine project.
-- 2026-06-29 [USER]: Current task adds a minimal GitHub Actions quality gate for pushes and pull requests.
-- 2026-06-22 [USER]: First credible MVP should prioritize deterministic matching, event logs, replayability, tests, benchmarks, and docs.
-- 2026-06-22 [CODE]: `aster-core` includes `PriceLevel`, a FIFO queue for valid resting limit orders at one price.
-- 2026-06-22 [CODE]: `aster-core` includes `OrderBook`, a passive single-instrument bid/ask storage shell using deterministic price levels.
-- 2026-06-22 [CODE]: `aster-core` includes `AsterEngine`, a deterministic command processor that assigns IDs/sequences, matches limit and market orders, emits trades, rests limit remainders, expires market remainders, and cancels resting orders.
-- 2026-06-22 [CODE]: `aster-core` includes in-memory replay from command sequences with deterministic final snapshots.
-- 2026-06-22 [CODE]: `AsterEngine` retains an in-memory append-only event log of emitted `EngineEvent`s.
-- 2026-06-22 [CODE]: `aster-core` has Criterion benchmarks for passive insertion, crossing matching, market sweeps, cancellation, mixed sessions, and replay.
-- 2026-06-27 [CODE]: `EngineSnapshot` includes ordered bid/ask levels, FIFO resting orders, complete accepted-order fields, and next allocation values.
-- 2026-06-27 [CODE]: Mixed-session invariant tests validate uncrossed books, ordered non-empty levels, FIFO, resting-order integrity, unique IDs, cancellation, replay, event logs, and explicit quantity accounting.
-- 2026-06-27 [CODE]: Allocation exhaustion and resting-quantity overflow fail explicitly without wrapping; obsolete unimplemented-feature errors were removed.
-- 2026-06-27 [CODE]: Nine golden V1 fixtures lock command, event, and full-snapshot JSON shapes using compile-time test assets.
-- 2026-06-27 [CODE]: `SessionRecord` captures ordered commands, emitted events, and the final full snapshot; verification distinguishes event and snapshot mismatches.
-- 2026-06-27 [CODE]: `aster-cli` provides four named scenarios with ordered command/event reports, full book output, and session verification status.
-- 2026-06-29 [CODE]: Limit submissions preflight projected post-match resting quantity so capacity rejection occurs before book mutation, event emission, or allocator advancement.
-- 2026-06-29 [CODE]: A test-only `Vec`-based reference model independently checks exact events and full snapshots across 11 deterministic sequences and 100 commands.
-- 2026-06-29 [CODE]: V1 snapshot conversion rejects structurally inconsistent summaries, levels, orders, identities, prices, FIFO order, crossed books, and allocator bounds.
-- 2026-06-29 [CODE]: Completed sessions save/load as V1 command/event JSONL plus snapshot JSON and verify through fresh-engine replay.
-- 2026-06-29 [CODE]: README and rustdoc now provide cold-start architecture, matching, replay, persistence, quality-gate, and limitations guidance.
-- 2026-06-29 [CODE]: Proptest runs 64 bounded generated action sequences against exact per-command engine/model events and full snapshots.
-- 2026-06-29 [CODE]: GitHub Actions runs formatting, strict clippy, tests, benchmark compilation, rustdoc, and focused CLI persistence smoke checks.
-- 2026-06-22 [ASSUMPTION]: Initial workspace uses Rust 2021 edition and no third-party dependencies.
+- 2026-06-22 [USER]: Aster is a standalone Rust central limit order book / exchange matching engine; correctness and deterministic integer matching come first.
+- 2026-09-29 [USER]: Supersedes audit-only task: implement the seven recommended milestones in order. MIT-only licensing selected.
+- 2026-09-29 [TOOL]: Remote is willcook415/aster, branch improvements/audit-roadmap; baseline 062d4a8. User authorized targeted commits and push, excluding the private preview.
+- 2026-09-29 [CODE]: Quantity-reduction increases fail atomically; equal quantity is a no-op. Private book/level aggregates replace repeated scans.
+- 2026-09-29 [CODE]: Strict V1/V2 decoding rejects unknown fields. Matching rules 1 explicitly allow self-trades.
+- 2026-09-29 [CODE]: V2 adapter adds command/global event sequences, market expiry and completion; V1 matching and event fixtures remain available.
+- 2026-09-29 [CODE]: CommandJournal synchronizes checksummed chained frames before acknowledgement; verified replay, exclusive ownership, incomplete-tail recovery, poisoned failure handles.
+- 2026-09-29 [CODE]: V1 exports remain non-atomic complete files. Journal recovery is process-crash scope; no exactly-once requests, snapshot restore, authenticated integrity, or power-loss promise.
+- 2026-09-29 [CODE]: Custom JSONL CLI, examples, MIT license, contributor guide, benchmark case study and Windows/Ubuntu stable/1.89 CI are present.
+- 2026-09-29 [TOOL]: All seven audit milestones implemented and locally verified. Remote CI results remain unconfirmed until the publication run completes.
 
 ## Decisions
 
-- D001 ACTIVE 2026-06-22 [USER]: Project name is Aster.
-- D002 ACTIVE 2026-06-22 [USER]: Aster is a standalone Rust repo.
-- D003 ACTIVE 2026-06-22 [USER]: Core engine comes first; no dashboard/UI yet.
-- D004 ACTIVE 2026-06-22 [USER]: Deterministic matching is a hard invariant.
-- D005 ACTIVE 2026-06-22 [USER]: Future price representation should use integer ticks, not floating-point prices.
-- D006 ACTIVE 2026-06-22 [USER]: Future matching priority should use engine sequence numbers, not wall-clock timestamps.
-- D007 ACTIVE 2026-06-29 [USER]: Persisted commands are canonical replay input; saved events and snapshots are audit/verification outputs.
-- D008 ACTIVE 2026-06-29 [USER]: `proptest` is allowed only as an `aster-core` dev-dependency for bounded matching state-machine tests.
+- D001 ACTIVE 2026-06-22 [USER]: Project name is Aster; standalone Rust repository.
+- D003 SUPERSEDED IN PART 2026-09-29 [USER]: Original no-dashboard instruction now permits the expressly requested local-only review interface.
+- D004 ACTIVE 2026-06-22 [USER]: Determinism is a hard invariant; integer ticks and engine priority sequences, not floating prices or wall-clock ordering.
+- D007 ACTIVE 2026-06-29 [USER]: Commands are canonical replay input; events and snapshots are audit/verification outputs.
+- D008 ACTIVE 2026-06-29 [USER]: Proptest is a core dev-dependency for bounded state-machine comparisons.
+- D009 ACTIVE 2026-09-29 [USER]: Private browser exploration approved; the later publication request explicitly excludes the local preview.
+- D010 ACTIVE 2026-09-29 [USER]: MIT only supersedes MIT OR Apache-2.0 metadata and prior unconfirmed license choice.
+- D011 ACTIVE 2026-09-29 [CODE]: Rust 1.89 minimum supports standard File locks; sha2 supplies vetted checksum implementation. Dependency rationale in docs/decisions.md.
+- D012 ACTIVE 2026-09-29 [CODE]: Audit schema 2 and matching rules 1 are separate. V2 is opt-in; strict V1 unknown-field rejection is a compatibility tightening.
 
 ## Done (recent)
 
-- 2026-06-29 [CODE]: Reproduced and fixed late-overflow partial mutation; focused tests lock snapshot, event-log, allocator, liquidity, and successful matching behavior.
-- 2026-06-29 [CODE]: Added independent deterministic model comparison for matching, priority, fills, expiry, cancellation, exact events, and complete visible state; no production bug found.
-- 2026-06-29 [CODE]: Hardened snapshot DTO-to-domain conversion with focused malformed-record tests while keeping command logs canonical and snapshots non-authoritative.
-- 2026-06-29 [CODE]: Added V1 completed-session persistence, line-aware/missing-file errors, replay verification, focused tests, and CLI export/verify.
-- 2026-06-29 [CODE]: Reworked repository landing/docs navigation and crate-level documentation for portfolio evaluation; no runtime behavior changed.
-- 2026-06-29 [CODE]: Added generated matching state-machine coverage using the existing independent oracle; no production bug or runtime change found.
-- 2026-06-29 [CODE]: Added one Ubuntu/stable-Rust CI job with read-only permissions and standard lockfile-keyed Cargo caching.
+- 2026-09-29 [CODE]: Repaired public reduction contract and added debug/release capacity regressions on both sides.
+- 2026-09-29 [CODE]: Defined strict-schema and self-trade policies with tests.
+- 2026-09-29 [TOOL]: Ran 25-workload Criterion matrix before/after aggregate caching; preserved means/95% intervals and honest cancellation regressions.
+- 2026-09-29 [CODE]: Added cached totals, independent recomputation and batch-partition properties.
+- 2026-09-29 [CODE]: Added custom-input CLI, examples/diagram, MIT, contributor docs and expanded CI.
+- 2026-09-29 [CODE]: Added opt-in correlated V2 audit events and browser presentation, with fixtures/replay/sequence tests.
+- 2026-09-29 [CODE]: Added scoped command journal and recovery CLI; corruption, fault injection, byte-truncation and process-exit tests pass.
 
 ## Working set
 
-- 2026-06-22 [CODE]: `crates/aster-core/src/`
-- 2026-06-22 [CODE]: `crates/aster-core/tests/`
-- 2026-06-22 [CODE]: `crates/aster-core/src/schema.rs`
-- 2026-06-22 [CODE]: `crates/aster-core/src/schema/`
-- 2026-06-29 [CODE]: `.github/workflows/ci.yml`
-- 2026-06-29 [CODE]: `crates/aster-core/tests/reference_model_tests.rs`
-- 2026-06-29 [CODE]: `crates/aster-core/src/persistence.rs`
-- 2026-06-27 [CODE]: `crates/aster-cli/src/`
-- 2026-06-22 [CODE]: `README.md`
-- 2026-06-22 [CODE]: `docs/architecture.md`
-- 2026-06-22 [CODE]: `docs/persistence.md`
-- 2026-06-22 [CODE]: `CONTINUITY.md`
+- 2026-09-29 [CODE]: crates/aster-core/src/{order_book,price_level,schema,sequenced}.rs
+- 2026-09-29 [CODE]: crates/aster-core/src/journal/
+- 2026-09-29 [CODE]: crates/aster-core/tests/
+- 2026-09-29 [CODE]: crates/aster-core/benches/scaling.rs
+- 2026-09-29 [CODE]: crates/aster-cli/src/ and tests/
+- 2026-09-29 [CODE]: docs/{decisions,audit-events,recovery}.md
+- 2026-09-29 [CODE]: docs/benchmarks/ and scripts/benchmark_report.py
+- 2026-09-29 [CODE]: README.md, CONTRIBUTING.md, LICENSE, CHANGELOG.md
+- 2026-09-29 [CODE]: .github/workflows/
+- 2026-09-29 [CODE]: examples/ and docs/assets/fifo.svg
 
 ## Next
 
-- 2026-06-27 [USER]: Deterministic CLI scenario-runner milestone completed; next development direction is UNCONFIRMED.
-- 2026-06-29 [USER]: Rejected-submission atomicity hardening completed; subsequent development direction remains UNCONFIRMED.
-- 2026-06-29 [USER]: Independent deterministic model-testing milestone completed; subsequent development direction remains UNCONFIRMED.
-- 2026-06-29 [USER]: Snapshot/schema boundary hardening completed; durable JSONL persistence remains UNCONFIRMED.
-- 2026-06-29 [USER]: Completed-session JSONL persistence milestone implemented; live journaling and crash-safe durability remain future work.
-- 2026-06-29 [USER]: Portfolio-readiness documentation pass completed; next technical milestone remains UNCONFIRMED.
-- 2026-06-29 [USER]: Property-based matching milestone completed; persistence/schema fuzzing remains separate future work.
-- 2026-06-29 [USER]: Minimal CI quality-gate milestone completed; repository URL and status badge remain UNCONFIRMED.
+- 2026-09-29 [TOOL]: Publish focused commits on improvements/audit-roadmap. Release/tag creation is not requested.
+- 2026-09-29 [CODE]: Future investigation: cancellation indexing, atomic V1 export generations, request deduplication, checkpoint compaction and coverage-guided fuzzing. These are beyond the completed seven-milestone scope.
 
 ## Open questions
 
-- 2026-06-22 [USER]: UNCONFIRMED final public repository URL.
-- 2026-06-22 [USER]: UNCONFIRMED license choice beyond placeholder workspace metadata.
+- 2026-09-29 [USER]: None blocking. MIT license choice is confirmed.
 
 ## Receipts
 
-- 2026-06-22 [TOOL]: After cancellation execution milestone, `cargo fmt`, `cargo clippy --workspace --all-targets -- -D warnings`, and `cargo test --workspace` completed successfully; 76 core tests passed.
-- 2026-06-22 [TOOL]: After in-memory replay milestone, `cargo fmt`, `cargo clippy --workspace --all-targets -- -D warnings`, and `cargo test --workspace` completed successfully; 83 core tests passed.
-- 2026-06-22 [TOOL]: After in-engine event log milestone, `cargo fmt`, `cargo clippy --workspace --all-targets -- -D warnings`, and `cargo test --workspace` completed successfully; 93 core tests passed.
-- 2026-06-22 [TOOL]: After benchmark milestone, `cargo fmt`, `cargo clippy --workspace --all-targets -- -D warnings`, `cargo test --workspace`, and `cargo bench -p aster-core` completed successfully; 93 core tests passed and 7 Criterion workloads executed.
-- 2026-06-22 [TOOL]: After persistence-design doc milestone, `cargo fmt`, `cargo clippy --workspace --all-targets -- -D warnings`, and `cargo test --workspace` completed successfully; no benchmark code changed.
-- 2026-06-22 [TOOL]: After schema DTO milestone, `cargo fmt`, `cargo clippy --workspace --all-targets -- -D warnings`, `cargo test --workspace`, and `cargo bench -p aster-core --no-run` completed successfully; 14 schema integration tests added.
-- 2026-06-27 [TOOL]: Full-state snapshots passed `cargo fmt`, clippy with warnings denied, 110 workspace tests, and benchmark compilation.
-- 2026-06-27 [TOOL]: Invariant hardening passed `cargo fmt`, clippy with warnings denied, all 114 workspace tests, benchmark compilation, and `git diff --check`.
-- 2026-06-27 [TOOL]: Boundary cleanup passed `cargo fmt`, clippy with warnings denied, all 120 workspace tests, benchmark compilation, and `git diff --check`.
-- 2026-06-27 [TOOL]: Documentation cleanup passed format check, clippy with warnings denied, all 120 workspace tests, benchmark compilation, and `git diff --check`.
-- 2026-06-27 [TOOL]: Golden V1 fixtures passed `cargo fmt`, clippy with warnings denied, all 127 workspace tests, benchmark compilation, and `git diff --check`.
-- 2026-06-27 [TOOL]: In-memory sessions passed `cargo fmt`, clippy with warnings denied, all 134 workspace tests, benchmark compilation, and `git diff --check`.
-- 2026-06-27 [TOOL]: CLI scenario runner passed `cargo fmt`, strict clippy, all 141 workspace tests, benchmark compilation, all four scenario runs, listing, and `git diff --check`.
-- 2026-06-29 [TOOL]: Atomicity hardening passed `cargo fmt --check`, strict clippy, all 146 workspace tests, benchmark compilation, and default/list/all four CLI scenario runs.
-- 2026-06-29 [TOOL]: Independent model testing passed formatting, strict clippy, all 147 workspace tests, benchmark compilation, and default/list/all four CLI scenario runs.
-- 2026-06-29 [TOOL]: Snapshot/schema hardening passed formatting, strict clippy, all 158 workspace tests, benchmark compilation, and default/list/all four CLI scenario runs.
-- 2026-06-29 [TOOL]: V1 completed-session persistence passed formatting, strict clippy, all 170 workspace tests, benchmark compilation, existing CLI smokes, and export/verify for all four scenarios.
-- 2026-06-29 [TOOL]: Portfolio-readiness pass passed formatting, strict clippy, 170 unit/integration tests plus rustdoc example, benchmark compilation, workspace docs, CLI smokes, and export/verify.
-- 2026-06-29 [TOOL]: Property-based matching passed formatting, strict clippy, 171 unit/integration tests plus rustdoc example, benchmark compilation, workspace docs, CLI smokes, and export/verify.
-- 2026-06-29 [TOOL]: Minimal CI workflow locally mirrored successfully: formatting, strict clippy, 171 tests plus rustdoc, benchmark compilation, docs, and focused CLI persistence smoke.
+- 2026-09-29 [TOOL]: Initial audit: 171 unit/integration tests plus doctest passed on Rust 1.98.1; original quantity defect reproduced in debug/release.
+- 2026-09-29 [TOOL]: Focused quantity contract and strict-schema tests passed before optimization.
+- 2026-09-29 [TOOL]: Criterion before-cache and after-cache completed all 25 workloads; target/scaling-before.log and target/scaling-after.log.
+- 2026-09-29 [TOOL]: 4k one-level insertion 25.133 -> 1.456 ms (17.26x); many-level 191.338 -> 2.852 ms (67.08x). Tail cancellation 19.755 -> 22.843 ms. Local active Windows desktop; docs/benchmarks has full method and intervals.
+- 2026-09-29 [TOOL]: Stable full suite: 198 unit/integration tests plus doctest, zero failures; target/tests-final.log.
+- 2026-09-29 [TOOL]: Rust 1.89.0 full suite: same 198 plus doctest pass; target/tests-msrv.log.
+- 2026-09-29 [TOOL]: Release quantity/aggregate/V2 regressions pass; final eight journal tests pass in release, including every final-frame truncation point and process exit without Drop.
+- 2026-09-29 [TOOL]: ASTER_PROPTEST_CASES=4096 and PROPTEST_CASES=2048 extended model/aggregate run passed; target/tests-extended.log.
+- 2026-09-29 [TOOL]: cargo fmt --check, strict workspace/all-targets Clippy, rustdoc with warnings denied and all benchmark compilation pass.
+- 2026-09-29 [TOOL]: CLI subprocess tests verify custom FIFO, missing-input errors, V2 expiry JSONL, journal create/recover/resume, no overwrite and corruption errors.
+- 2026-09-29 [TOOL]: Local-review release bridge rebuilt; browser shows expiry and correlated sequences. Unknown time_in_force rejected; valid session remains and replay succeeds. No native desktop interaction.
+- 2026-09-29 [TOOL]: Git whitespace checks pass. Private review artifacts and preview source are excluded from publication.
+
+## Incidents
+
+I001 RESOLVED 2026-09-29 [CODE]: reduce_front_quantity previously allowed increases and could make book totals overflow. Increase rejection and checked cached aggregates now preserve invariants; both sides tested at u64::MAX in debug/release. Regression tests assert the fixed behavior.

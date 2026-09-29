@@ -1,5 +1,8 @@
 # Aster
 
+[![CI](https://github.com/willcook415/aster/actions/workflows/ci.yml/badge.svg)](https://github.com/willcook415/aster/actions/workflows/ci.yml)
+[MIT licensed](LICENSE) · Rust 1.89+ · Windows / Ubuntu CI
+
 Aster is a deterministic central limit order book and exchange matching engine
 written in Rust. It models the core mechanics behind an exchange: accepting
 commands, matching orders by price-time priority, emitting explicit events, and
@@ -13,8 +16,8 @@ model. This is a portfolio project, not production financial infrastructure.
 
 Requirements:
 
-- Stable Rust and Cargo. The workspace declares Rust 1.75, but the current
-  dependency lockfile is tested on stable; that minimum is not verified in CI.
+- Rust 1.89 or newer and Cargo. CI covers the declared minimum and stable on
+  Windows and Ubuntu.
 
 Clone the repository and run the default `mixed-session` scenario:
 
@@ -34,6 +37,19 @@ cargo run -p aster-cli -- scenario mixed-session
 The report includes commands, emitted events, event counts, the complete final
 book, allocator state, and replay verification.
 
+## Try it in two minutes
+
+![FIFO matching: two sells, one crossing buy, five units remain](docs/assets/fifo.svg)
+
+```bash
+cargo run --locked -p aster-cli -- run examples/fifo.jsonl
+cargo run --locked -p aster-cli -- run-v2 examples/market-expiry.jsonl
+```
+
+The first example trades 10 units with the first seller, then 2 with the second,
+leaving 5 at price 101. The second emits an explicit expiry for 3 unfilled units.
+Edit the JSONL to explore your own commands. Unsupported fields fail clearly.
+
 ## What Aster Is
 
 Aster currently provides:
@@ -51,7 +67,9 @@ Aster currently provides:
 - V1 command/event/snapshot schema records with structural validation;
 - completed-session persistence using JSONL command/event logs and snapshot
   JSON;
-- a deterministic CLI scenario runner;
+- custom JSONL input and a deterministic CLI scenario runner;
+- opt-in V2 audit sequences, command correlation and explicit market expiry;
+- a checksummed single-writer command journal with verified process-crash recovery;
 - rule, invariant and property-based tests plus focused Criterion benchmarks.
 
 Prices are integer ticks and quantities are integer units. Matching priority is
@@ -152,8 +170,17 @@ outputs:
 cargo run -p aster-cli -- verify ./target/aster-session-smoke/mixed-session
 ```
 
-Persistence uses deterministic complete-file writes. It is not a live journal
-and does not provide crash-safe or atomic replacement guarantees.
+This V1 format uses deterministic complete-file writes and has no atomic
+replacement guarantee. For per-command persistence use the separate journal:
+
+```bash
+cargo run --locked -p aster-cli -- journal examples/fifo.jsonl target/demo.aster
+cargo run --locked -p aster-cli -- recover target/demo.aster
+```
+
+The journal synchronizes each complete command before acknowledging it, verifies
+checksums and replay on recovery, and detects torn tails. Read the exact
+[recovery contract and limits](docs/recovery.md) before using it.
 
 ## Tests and Quality Gates
 
@@ -189,9 +216,17 @@ cargo bench -p aster-core
 ```
 
 The workloads cover passive insertion, crossing matches, market sweeps,
-cancellation, mixed sessions, and replay. They are development benchmarks, not
+cancellation at multiple queue positions, partial fills, rejection, serialization,
+mixed sessions, and replay across multiple sizes and price-level shapes. They are development benchmarks, not
 production capacity or latency claims. See
 [Performance](docs/performance.md).
+
+Caching aggregate quantities reduced the measured 4,000-order insertion workload
+from 25.13 ms to 1.46 ms at one level, and from 191.34 ms to 2.85 ms across levels
+on one Windows host. Tail cancellation remains linear and regressed in the same
+run. The [case study](docs/benchmarks/cache-investigation.md) includes all 25
+workloads, confidence intervals, method, and limitations; these are not general
+exchange throughput claims.
 
 ## Documentation
 
@@ -201,14 +236,22 @@ production capacity or latency claims. See
 - [Performance and benchmark scope](docs/performance.md)
 - [Persistence format and guarantees](docs/persistence.md)
 - [Current limitations](docs/limitations.md)
+- [V2 audit contract](docs/audit-events.md)
+- [Journal and recovery](docs/recovery.md)
+- [Decisions](docs/decisions.md) and [contribution guide](CONTRIBUTING.md)
 
 ## Current Status
 
-The in-memory matching MVP and completed-session V1 persistence are implemented
-and tested. The next technical work has not been selected.
+The deterministic matching core, strict schemas, replay, V2 audit adapter,
+custom-input CLI, and scoped journal are implemented. CI publishes generated
+rustdoc as a downloadable artifact. Matching-model properties, malformed input,
+quantity boundaries, and recovery fault cases are executable evidence.
 
-Aster has no production durability guarantee, crash-safe writes, append-only
-live journal, schema migration framework, database/recovery system, risk engine,
-network protocol, persistence/schema fuzzing, multi-symbol layer, or
-regulatory/operational controls. Those omissions are explicit so the implemented
-core can be evaluated on what it actually proves.
+The next performance investigation is queue-position cancellation. The next
+recovery milestone is checkpoint/compaction design and request deduplication.
+There is no networking, risk engine, multi-symbol routing, replication, or
+production operations layer. See the limitations before interpreting the demo.
+
+## License
+
+[MIT](LICENSE).

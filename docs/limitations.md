@@ -10,9 +10,10 @@ complete exchange system.
 Current boundaries include:
 
 - One in-memory order book; there is no multi-symbol routing or exchange layer.
-- Completed sessions use simple complete-file JSON/JSONL persistence. There is
-  no live append journal, crash-safe/atomic replacement, recovery process, or
-  database.
+- V1 completed sessions use non-atomic complete-file JSON/JSONL writes. The
+  optional journal supports verified process-crash recovery, with explicit
+  [limits](recovery.md): no exactly-once requests, power-loss guarantee, replication,
+  snapshot restoration, or database.
 - Validated snapshots remain comparison/checkpoint records; no snapshot loading
   or recovery authority is implemented.
 - No networking, FIX, WebSockets, market-data feeds, or external protocol
@@ -20,14 +21,17 @@ Current boundaries include:
 - No balances, positions, settlement, risk limits, user accounts,
   authentication, authorization, or participant onboarding.
 - No concurrency model, thread-safety guarantee, latency service level,
-  durability guarantee, or high-availability design.
+  production durability guarantee, or high-availability design.
 - No operational controls, regulatory reporting, surveillance, disaster
   recovery, or other production exchange hardening.
 - Only limit and market orders are supported. Advanced order instructions and
   venue-specific rules are absent.
 - Property-based matching tests use bounded generated command sequences against
-  the independent model. Persistence/schema fuzzing and exhaustion/overflow
-  generation are not implemented.
+  the independent model. Boundary regressions and exhaustive final-frame byte
+  truncation tests exist; there is no coverage-guided fuzzing campaign.
+- Self-trades are allowed by matching rules 1; no prevention policy is implemented.
+- V1 retains its event log in memory. The V2 adapter clears it between commands.
+- Queue-position cancellation is linear, including middle/tail removals.
 - Benchmarks are focused development workloads, not production capacity or
   latency claims.
 

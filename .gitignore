@@ -1,2 +1,5 @@
 /target/
 **/*.rs.bk
+
+# Private development preview; intentionally excluded from repository publishing.
+/tools/local-review/

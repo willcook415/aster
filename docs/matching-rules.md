@@ -82,3 +82,12 @@ they are not silently ignored.
 - [Testing strategy](testing-strategy.md)
 - [Persistence](persistence.md)
 - [Limitations](limitations.md)
+
+## Boundary and audit policy
+
+Matching rules 1 allow self-trades. Participant ownership is enforced for
+cancellation, but is not self-trade prevention. Quantity reduction helpers reject
+increases atomically and allow equal quantities as no-ops. All V1 and V2 schema
+DTOs reject unknown fields. The opt-in [V2 audit layer](audit-events.md) exposes
+market expiry and command correlation without changing matching priority or the
+V1 event schema.

@@ -68,7 +68,7 @@ replay as the source of truth.
   in memory and verifies both outputs by replaying the recorded commands.
 - The engine event log is in-memory only.
 - Versioned schema DTOs exist in `aster-core::schema`.
-- The current schema version is `1`.
+- Completed-session schema version is `1`; the separate audit/journal layer uses `2`.
 - Command, event, and snapshot records can round-trip through JSON in memory.
 - Snapshot DTO conversion validates visible-book structure, summary values,
   matching/FIFO order, unique identities, uncrossed prices, and allocator
@@ -78,7 +78,7 @@ replay as the source of truth.
 - JSONL parse and schema failures identify the record kind and line number.
 - Loaded sessions can be verified by replaying commands and comparing saved
   events and final snapshots.
-- There is no live append journal, crash-safe replacement, or recovery service.
+- V1 exports have no crash-safe replacement; the separate live journal is described below.
 - Schema version validation exists for DTO-to-engine conversion.
 
 `SessionRecord` remains an internal domain model. The persistence layer converts
@@ -93,9 +93,8 @@ input.
 ## Future Durability Work
 
 - Crash-safe temporary-file and atomic-replacement policy.
-- Live append-only command journaling.
-- Recovery and checkpoint policy.
-- Integrity checks or checksums where justified.
+- Snapshot restoration and checkpoint/compaction policy.
+- Atomic completed-session generations; the journal already has chained checksums.
 - Explicit schema migrations.
 
 ## File Shape
@@ -188,3 +187,11 @@ Those concerns belong to later exchange-layer, risk, integration, or product mil
 - [Matching rules](matching-rules.md)
 - [Testing strategy](testing-strategy.md)
 - [Limitations](limitations.md)
+
+## Separate live-journal option
+
+The complete-file guarantees above describe only V1 session exports. The optional
+`CommandJournal` adds per-command synchronized, checksummed V2 frames and verified
+process-crash recovery. It does not change V1 export behavior or restore from
+snapshots. See the [journal contract](recovery.md). `load_command_file` and CLI
+`run` also accept standalone strict V1 command JSONL without saved audit files.
