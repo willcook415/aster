@@ -18,5 +18,9 @@ proptest = "1"
 name = "engine_benchmarks"
 harness = false
 
+[[bench]]
+name = "scaling"
+harness = false
+
 [lints]
 workspace = true
