@@ -8,6 +8,7 @@ rust-version.workspace = true
 
 [dependencies]
 aster-core = { path = "../aster-core" }
+serde_json = "1"
 
 [lints]
 workspace = true

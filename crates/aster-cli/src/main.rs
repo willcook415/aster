@@ -1,3 +1,5 @@
+mod input;
+mod recovery;
 mod report;
 mod scenario;
 
@@ -39,6 +41,12 @@ where
         [command, name] if command == "scenario" => run_scenario(name),
         [command, name, path] if command == "export" => export_scenario(name, path),
         [command, path] if command == "verify" => verify_directory(path),
+        [command, path] if command == "run" => input::run_file(path, None),
+        [command, path, output] if command == "run" => input::run_file(path, Some(output)),
+        [command, path] if command == "run-v2" => recovery::run_v2(path),
+        [command, input, path] if command == "journal" => recovery::append(input, path, false),
+        [command, input, path] if command == "resume" => recovery::append(input, path, true),
+        [command, path] if command == "recover" => recovery::recover(path),
         [command, ..] if command == "scenario" => {
             Err("usage: aster-cli scenario <scenario-name>".to_string())
         }
@@ -114,6 +122,11 @@ fn usage() -> String {
            aster-cli scenario <name>         Run a named scenario\n\
            aster-cli export <name> <dir>     Export a built-in scenario session\n\
            aster-cli verify <dir>            Verify a persisted session directory\n\
+           aster-cli run <commands.jsonl> [dir]  Run custom commands; optionally export V1 session\n\
+           aster-cli run-v2 <commands.jsonl>  Emit correlated V2 event batches as JSONL\n\
+           aster-cli journal <input> <file>   Create a new synchronized command journal\n\
+           aster-cli resume <input> <file>    Recover and append to an existing journal\n\
+           aster-cli recover <file>           Verify journal without changing it\n\
            aster-cli help                    Show this help\n"
     )
 }

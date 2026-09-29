@@ -28,6 +28,7 @@ name = "aster-cli"
 version = "0.1.0"
 dependencies = [
  "aster-core",
+ "serde_json",
 ]
 
 [[package]]
